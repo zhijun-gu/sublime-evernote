@@ -8,11 +8,7 @@ SublimeEvernote
 
 Through [Package Control](http://wbond.net/sublime_packages/package_control)
 
-`Command Palette` > `Package Control: Install Package` > `SublimeEvernote`
-
-or
-
-`Command Palette` > `Package Control: add Repository` && `input 'http://github.com/jamiesun/SublimeEvernote`
+`Command Palette` > `Package Control: add Repository` && input `http://github.com/rekotan/SublimeEvernote.git`
 
 `Command Palette` > `Package Control: Install Package` > `SublimeEvernote`
 
