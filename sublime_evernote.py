@@ -9,6 +9,7 @@ from html import XHTML
 import sublime
 import sublime_plugin
 import webbrowser
+import markdown2
 
 
 settings = sublime.load_settings("SublimeEvernote.sublime-settings")
@@ -18,6 +19,20 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
     def __init__(self, view):
         self.view = view
         self.window = sublime.active_window()
+
+    def to_markdown_html(self):
+        region = sublime.Region(0, self.view.size())
+        encoding = self.view.encoding()
+        if encoding == 'Undefined':
+            encoding = 'utf-8'
+        elif encoding == 'Western (Windows 1252)':
+            encoding = 'windows-1252'
+        contents = self.view.substr(region)
+
+        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'cuddled-lists', 'code-friendly', 'metadata'])
+        
+        return markdown_html
+
 
     def connect(self, callback, **kwargs):
         sublime.status_message("initializing..., please wait...")
@@ -46,6 +61,8 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
         region = sublime.Region(0L, self.view.size())
         content = self.view.substr(region)
 
+        markdown_html = self.to_markdown_html()
+
         def __send_note(title, tags):
             xh = XHTML()
             note = Types.Note()
@@ -53,8 +70,8 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             note.content = '<?xml version="1.0" encoding="UTF-8"?>'
             note.content += '<!DOCTYPE en-note SYSTEM \
                 "http://xml.evernote.com/pub/enml2.dtd">'
-            note.content += '<en-note><pre>%s' % xh.p(content.encode('utf-8'))
-            note.content += '</pre></en-note>'
+            note.content += '<en-note>%s'%markdown_html.encode('utf-8')
+            note.content += '</en-note>'
             note.tagNames = tags and tags.split(",") or []
             try:
                 sublime.status_message("please wait...")
