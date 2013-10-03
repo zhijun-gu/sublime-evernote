@@ -1,3 +1,6 @@
 [submodule "evernote-sdk-python"]
 	path = lib/evernote-sdk-python
 	url = https://github.com/evernote/evernote-sdk-python
+[submodule "lib/evernote-sdk-python3"]
+	path = lib/evernote-sdk-python3
+	url = https://github.com/evernote/evernote-sdk-python3
