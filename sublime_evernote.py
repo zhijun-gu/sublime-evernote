@@ -54,14 +54,16 @@ import sublime_plugin
 import webbrowser
 import markdown2
 
-
-settings = sublime.load_settings("SublimeEvernote.sublime-settings")
+# Top level calls to sublime are ignored in Sublime Text 3 at startup!
+# settings = sublime.load_settings("SublimeEvernote.sublime-settings")
 
 
 class SendToEvernoteCommand(sublime_plugin.TextCommand):
+
     def __init__(self, view):
         self.view = view
         self.window = sublime.active_window()
+        self.settings = sublime.load_settings("SublimeEvernote.sublime-settings")
 
     def to_markdown_html(self):
         region = sublime.Region(0, self.view.size())
@@ -79,44 +81,50 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
         sublime.status_message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
-            settings.set("token", token)
-            settings.set("noteStoreUrl", noteStoreUrl)
+            print("token param {0}".format(token))
+            print("url param {0}".format(noteStoreUrl))
+            print("token pre {0}".format(self.settings.get("token")))
+            print("url pre {0}".format(self.settings.get("noteStoreUrl")))
+            self.settings.set("token", token)
+            self.settings.set("noteStoreUrl", noteStoreUrl)
+            print("Token {0}".format(self.settings.get(token)))
+            print("url {0}".format(self.settings.get(noteStoreUrl)))
             sublime.save_settings("SublimeEvernote.sublime-settings")
+            print("post Token {0}".format(self.settings.get(token)))
+            print("post url {0}".format(self.settings.get(noteStoreUrl)))
             callback(**kwargs)
 
         def __derive_note_store_url(token):
             token_parts = token.split(":")
             id = token_parts[0][2:]
-            print ("id is -->{0}<--".format(id))
             url = "http://www.evernote.com/shard/" + id + "/notestore"
             return url
 
         def on_token(token):
-            noteStoreUrl = settings.get("noteStoreUrl")
+            noteStoreUrl = self.settings.get("noteStoreUrl")
             if (sys.version_info.major == 3) and (not noteStoreUrl):
-                noteStoreUrl = __derive_note_store_url(token)
-                __connect(token, noteStoreUrl)
-            elif token:
-                __connect(token, None)     # NB: We don't care about noteStoreUrl in Sublime Text 2
+                 noteStoreUrl = __derive_note_store_url(token)
+            __connect(token, noteStoreUrl)
 
-        token = settings.get("token")
+        token = self.settings.get("token")
         if token:
-            noteStoreUrl = settings.get("noteStoreUrl")
+            noteStoreUrl = self.settings.get("noteStoreUrl")
             if not noteStoreUrl:
                 noteStoreUrl = __derive_note_store_url(token)
-            __connect(token, noteStoreUrl)
+                __connect(token, noteStoreUrl)
         else:
             webbrowser.open_new_tab("https://www.evernote.com/api/DeveloperToken.action")
             self.window.show_input_panel("Developer Token (required)::", "", on_token, None, None)
 
-
     def send_note(self, **kwargs):
-        token = settings.get("token")
+        token = self.settings.get("token")
 
         if sys.version_info.major == 2:
             noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
         if sys.version_info.major == 3:
-            noteStoreUrl = settings.get("noteStoreUrl")
+            noteStoreUrl = self.settings.get("noteStoreUrl")
+            print("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
+            print("I've got this for token -->{0}<--".format(token))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
             noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
@@ -164,7 +172,6 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             except Exception as e:
                 sublime.error_message('error %s' % e)
 
-
         def __get_notebooks():
             notebooks = None
             try:
@@ -177,7 +184,6 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             except Exception as e:
                 sublime.error_message('Error getting notebooks: %s' % e)
             return notebooks
-
 
         notebooks = __get_notebooks()
         def on_title(title):
@@ -193,11 +199,8 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             __send_note(kwargs.get("title"), kwargs.get("notebookGuid"), kwargs.get("tags"))
 
 
-
-
-
     def run(self, edit):
-        if not settings.get("token"):
+        if not self.settings.get("token"):
             self.connect(self.send_note)
         else:
             self.send_note()
