@@ -1,7 +1,7 @@
 SublimeEvernote
 ===============
 
-[Sublime Text 2](http://www.sublimetext.com/2) plugin for [Evernote](http://www.evernote.com) 
+[Sublime Text 2](http://www.sublimetext.com/2) plugin for [Evernote](http://www.evernote.com)
 
 This package combines [jamiesun](https://github.com/jamiesun)'s original plugin with [rekotan](https://github.com/rekotan)'s update. Jamiesun's original package doesn't work for me because it attempts to authenticate via the (now) outdated Userstore.authenticate. Rekotan updated the package to use a proper token; however, the update also sends the markdown as preformatted text. I prefer to transform the Markdown to Evernote rich text, and if you're of the same mind, then this is your Sublime-Evernote package.
 
@@ -31,3 +31,8 @@ in
 `Context menu` > `Send to Evernote`
 
 `Context menu` > `Evernote settings`
+
+# Some Modifications
+
+This version will work in Sublime Text 3 with Python 3, and it will also allow you to choose which
+notebook you would like to save your note to.

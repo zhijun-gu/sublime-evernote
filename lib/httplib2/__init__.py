@@ -253,7 +253,7 @@ def safename(filename):
 
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
 def _normalize_headers(headers):
-    return dict([ (key.lower(), NORMALIZE_SPACE.sub(value, ' ').strip())  for (key, value) in headers.iteritems()])
+    return dict([ (key.lower(), NORMALIZE_SPACE.sub(value, ' ').strip())  for (key, value) in headers.items()])
 
 def _parse_cache_control(headers):
     retval = {}
@@ -408,7 +408,7 @@ def _updateCache(request_headers, response_headers, content, cache, cachekey):
             cache.delete(cachekey)
         else:
             info = email.Message.Message()
-            for key, value in response_headers.iteritems():
+            for key, value in response_headers.items():
                 if key not in ['status','content-encoding','transfer-encoding']:
                     info[key] = value
 
@@ -1662,7 +1662,7 @@ class Response(dict):
                 self[key.lower()] = value
             self.status = int(self['status'])
         else:
-            for key, value in info.iteritems():
+            for key, value in info.items():
                 self[key.lower()] = value
             self.status = int(self.get('status', self.status))
             self.reason = self.get('reason', self.reason)
