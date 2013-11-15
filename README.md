@@ -24,7 +24,7 @@ in
 
 # Usage
 
-**Note: When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the token data in `Sublime Text 2/Packages/User/SublimeEvernote.sublime-settings`**
+**Note: When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the token data in `Sublime Text 3/Packages/User/SublimeEvernote.sublime-settings`**
 
 `Command Palette` > `Send to evernote`
 
