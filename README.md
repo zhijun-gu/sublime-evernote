@@ -1,7 +1,7 @@
 SublimeEvernote
 ===============
 
-[Sublime Text 2](http://www.sublimetext.com/2) plugin for [Evernote](http://www.evernote.com)
+[Sublime Text 3](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com)
 
 This package combines [jamiesun](https://github.com/jamiesun)'s original plugin with [rekotan](https://github.com/rekotan)'s update. Jamiesun's original package doesn't work for me because it attempts to authenticate via the (now) outdated Userstore.authenticate. Rekotan updated the package to use a proper token; however, the update also sends the markdown as preformatted text. I prefer to transform the Markdown to Evernote rich text, and if you're of the same mind, then this is your Sublime-Evernote package.
 
@@ -17,10 +17,10 @@ $ git clone --recursive http://github.com/timlockridge/SublimeEvernote.git
 
 in
 
-* Windows: `%APPDATA%/Roaming/Sublime Text 2/Packages/`
-* OSX: `~/Library/Application Support/Sublime Text 2/Packages/`
-* Linux: `~/.Sublime Text 2/Packages/`
-* Portable Installation: `Sublime Text 2/Data/`
+* Windows: `%APPDATA%/Roaming/Sublime Text 3/Packages/`
+* OSX: `~/Library/Application Support/Sublime Text 3/Packages/`
+* Linux: `~/.Sublime Text 3/Packages/`
+* Portable Installation: `Sublime Text 3/Data/`
 
 # Usage
 
