@@ -73,7 +73,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
         elif encoding == 'Western (Windows 1252)':
             encoding = 'windows-1252'
         contents = self.view.substr(region)
-        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'cuddled-lists', 'code-friendly', 'metadata'])
+        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'codehilite', 'cuddled-lists', 'code-friendly', 'metadata'])
         return markdown_html
 
 
@@ -204,3 +204,63 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             self.connect(self.send_note)
         else:
             self.send_note()
+
+
+class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
+
+    def __init__(self, window):
+        self.window = window
+        self.settings = sublime.load_settings("SublimeEvernote.sublime-settings")
+
+    def run(self):
+        from html2text import html2text
+
+        token = self.settings.get("token")
+
+        if sys.version_info.major == 2:
+            noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
+        if sys.version_info.major == 3:
+            noteStoreUrl = self.settings.get("noteStoreUrl")
+            print("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
+            print("I've got this for token -->{0}<--".format(token))
+            noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
+            noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
+            noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
+            noteStore = NoteStore.Client(noteStoreProtocol)
+
+        notebooks = None
+        try:
+            sublime.status_message("Fetching notebooks, please wait...")
+            if sys.version_info.major == 2:
+                notebooks = noteStore.listNotebooks()
+            if sys.version_info.major == 3:
+                notebooks = noteStore.listNotebooks(token)
+            sublime.status_message("Fetched all notebooks!")
+        except Exception as e:
+            sublime.error_message('Error getting notebooks: %s' % e)
+
+        def on_notebook(notebook):
+            nid = notebooks[notebook].guid
+            notes = noteStore.findNotesMetadata(
+                token, NoteStore.NoteFilter(notebookGuid=nid),
+                0,
+                100,
+                NoteStore.NotesMetadataResultSpec(includeTitle=True)).notes
+            def on_note(i):
+                note = noteStore.getNote(token, notes[i].guid, True, False, False, False)
+                newview = self.window.new_file()
+                newview.set_scratch(True)
+                newview.set_name(note.title)
+                mdtxt = html2text(note.content)
+                newview.settings().set("auto_indent", False)
+                newview.settings().set("$evernote_guid", note.guid)
+                newview.run_command("insert", {"characters": mdtxt})
+                syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
+                newview.set_syntax_file(syntax)
+                newview.show(0)
+                # print("EVERNOTE:", mdtxt)
+
+            sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
+        self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
+
+
