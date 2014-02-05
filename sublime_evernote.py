@@ -23,6 +23,8 @@ import os
 # import the correct version of the Evernote SDK, depending on whether we are using
 # SublimeText2/Python2 or SublimeText3/Python3
 
+def LOG(*args):
+    print("Evernote: ", *args)
 
 package_file = os.path.normpath(os.path.abspath(__file__))
 package_path = os.path.dirname(package_file)
@@ -81,17 +83,17 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
         sublime.status_message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
-            print("token param {0}".format(token))
-            print("url param {0}".format(noteStoreUrl))
-            print("token pre {0}".format(self.settings.get("token")))
-            print("url pre {0}".format(self.settings.get("noteStoreUrl")))
+            LOG("token param {0}".format(token))
+            LOG("url param {0}".format(noteStoreUrl))
+            LOG("token pre {0}".format(self.settings.get("token")))
+            LOG("url pre {0}".format(self.settings.get("noteStoreUrl")))
             self.settings.set("token", token)
             self.settings.set("noteStoreUrl", noteStoreUrl)
-            print("Token {0}".format(self.settings.get(token)))
-            print("url {0}".format(self.settings.get(noteStoreUrl)))
+            LOG("Token {0}".format(self.settings.get(token)))
+            LOG("url {0}".format(self.settings.get(noteStoreUrl)))
             sublime.save_settings("SublimeEvernote.sublime-settings")
-            print("post Token {0}".format(self.settings.get(token)))
-            print("post url {0}".format(self.settings.get(noteStoreUrl)))
+            LOG("post Token {0}".format(self.settings.get(token)))
+            LOG("post url {0}".format(self.settings.get(noteStoreUrl)))
             callback(**kwargs)
 
         def __derive_note_store_url(token):
@@ -123,8 +125,8 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
         if sys.version_info.major == 3:
             noteStoreUrl = self.settings.get("noteStoreUrl")
-            print("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
-            print("I've got this for token -->{0}<--".format(token))
+            LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
+            LOG("I've got this for token -->{0}<--".format(token))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
             noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
@@ -221,8 +223,8 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
             noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
         if sys.version_info.major == 3:
             noteStoreUrl = self.settings.get("noteStoreUrl")
-            print("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
-            print("I've got this for token -->{0}<--".format(token))
+            LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
+            LOG("I've got this for token -->{0}<--".format(token))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
             noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
@@ -258,7 +260,7 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
                 syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
                 newview.set_syntax_file(syntax)
                 newview.show(0)
-                # print("EVERNOTE:", mdtxt)
+                # LOG(mdtxt)
 
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
         self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
