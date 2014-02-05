@@ -116,7 +116,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
                 __connect(token, noteStoreUrl)
         else:
             webbrowser.open_new_tab("https://www.evernote.com/api/DeveloperToken.action")
-            self.window.show_input_panel("Developer Token (required)::", "", on_token, None, None)
+            self.window.show_input_panel("Developer Token (required):", "", on_token, None, None)
 
     def send_note(self, **kwargs):
         token = self.settings.get("token")
@@ -219,6 +219,7 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
 
         token = self.settings.get("token")
 
+        # TODO: refactor pop out in def
         if sys.version_info.major == 2:
             noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
         if sys.version_info.major == 3:
@@ -230,6 +231,7 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
             noteStore = NoteStore.Client(noteStoreProtocol)
 
+        # TODO: refactor, join with __get_notebooks and caching (with reset after timeout)
         notebooks = None
         try:
             sublime.status_message("Fetching notebooks, please wait...")
@@ -264,5 +266,4 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
 
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
         self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
-
 
