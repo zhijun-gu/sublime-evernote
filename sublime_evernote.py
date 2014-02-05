@@ -23,9 +23,6 @@ import os
 # import the correct version of the Evernote SDK, depending on whether we are using
 # SublimeText2/Python2 or SublimeText3/Python3
 
-def LOG(*args):
-    print("Evernote: ", *args)
-
 package_file = os.path.normpath(os.path.abspath(__file__))
 package_path = os.path.dirname(package_file)
 lib_path = os.path.join(package_path, "lib")
@@ -56,8 +53,17 @@ import sublime_plugin
 import webbrowser
 import markdown2
 
+
+def LOG(*args):
+    print("Evernote: ", *args)
+
+USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
+
+EVERNOTE_SETTINGS = "Evernote.sublime-settings"
+
+
 # Top level calls to sublime are ignored in Sublime Text 3 at startup!
-# settings = sublime.load_settings("SublimeEvernote.sublime-settings")
+# settings = sublime.load_settings(EVERNOTE_SETTINGS)
 
 
 class SendToEvernoteCommand(sublime_plugin.TextCommand):
@@ -65,7 +71,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
     def __init__(self, view):
         self.view = view
         self.window = sublime.active_window()
-        self.settings = sublime.load_settings("SublimeEvernote.sublime-settings")
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
 
     def to_markdown_html(self):
         region = sublime.Region(0, self.view.size())
@@ -91,7 +97,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             self.settings.set("noteStoreUrl", noteStoreUrl)
             LOG("Token {0}".format(self.settings.get(token)))
             LOG("url {0}".format(self.settings.get(noteStoreUrl)))
-            sublime.save_settings("SublimeEvernote.sublime-settings")
+            sublime.save_settings(EVERNOTE_SETTINGS)
             LOG("post Token {0}".format(self.settings.get(token)))
             LOG("post url {0}".format(self.settings.get(noteStoreUrl)))
             callback(**kwargs)
@@ -128,7 +134,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
             LOG("I've got this for token -->{0}<--".format(token))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-            noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
+            noteStoreHttpClient.setCustomHeaders(USER_AGENT)
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
             noteStore = NoteStore.Client(noteStoreProtocol)
 
@@ -212,7 +218,7 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
 
     def __init__(self, window):
         self.window = window
-        self.settings = sublime.load_settings("SublimeEvernote.sublime-settings")
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
 
     def run(self):
         from html2text import html2text
@@ -227,7 +233,7 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
             LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
             LOG("I've got this for token -->{0}<--".format(token))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-            noteStoreHttpClient.setCustomHeaders({'User-Agent': 'SublimeEvernote/1.0'})
+            noteStoreHttpClient.setCustomHeaders(USER_AGENT)
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
             noteStore = NoteStore.Client(noteStoreProtocol)
 
