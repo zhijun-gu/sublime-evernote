@@ -169,10 +169,10 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
                 if e.errorCode == 9:
                     self.connect(self. send_note, **args)
                 else:
-                    if sublime.ok_cancel_dialog('error %s! retry?' % e):
+                    if sublime.ok_cancel_dialog('Error %s! retry?' % e):
                         self.connect(self.send_note, **args)
             except Exception as e:
-                sublime.error_message('error %s' % e)
+                sublime.error_message('Error %s' % e)
 
         def __get_notebooks():
             notebooks = None
@@ -193,10 +193,10 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
                 def on_notebook(notebook):
                     __send_note(title, notebooks[notebook].guid, tags)
                 self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
-            self.window.show_input_panel("Tags (Optional)::", "", on_tags, None, None)
+            self.window.show_input_panel("Tags (Optional):", "", on_tags, None, None)
 
         if not kwargs.get("title"):
-            self.window.show_input_panel("Title (required)::", "", on_title, None, None)
+            self.window.show_input_panel("Title (required):", "", on_title, None, None)
         else:
             __send_note(kwargs.get("title"), kwargs.get("notebookGuid"), kwargs.get("tags"))
 
