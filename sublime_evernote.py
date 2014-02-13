@@ -11,9 +11,6 @@ import os
 # Also, OAuth was not implemented, because the Python 3 that is built into Sublime Text 3 was
 # built without SSL. So, among other things, this means no http.client.HTTPSRemoteConnection
 #
-# Finally, as another TODO, the __get_notebooks() function should probably employ some kind
-# of caching, but, alas, it is getting late here . . .
-#
 # One gotcha -- the THttpClient.py file, included in the Evernote Python 3 SDK, includes
 # a call to .iteritems() on a dictionary on line 138. This is forbidden in python 3. I
 # fixed it by changing .iteritems() to .items() and submitted an Issue on GitHub, so
