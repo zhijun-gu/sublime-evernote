@@ -17,7 +17,7 @@ It adds support for Sublime Text 3 (thanks to [timlockridge](https://github.com/
 clone this repository with
 
 ```sh
-$ git clone --recursive http://github.com/timlockridge/SublimeEvernote.git
+$ git clone --recursive http://github.com/bordaigorl/sublime-evernote.git
 ```
 
 in
