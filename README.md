@@ -8,9 +8,9 @@ It adds support for Sublime Text 3 (thanks to [timlockridge](https://github.com/
 
 # Main Features
 
- * Send a note to Evernote: converts the markdown document in the current view into rich text and sends it to your Evernote. You will be able to choose a title, tags and the notebook where to store it.
- * Open a note from Evernote: shows panels to choose a note from a notebook, converts it to markdown and presents it in a view.
- * Update note: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
+ * **Send a note to Evernote:** converts the markdown document in the current view into rich text and sends it to your Evernote. You will be able to choose a title, tags and the notebook where to store it.
+ * **Open a note from Evernote**: shows panels to choose a note from a notebook, converts it to markdown and presents it in a view.
+ * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
 
 # Installation
 
@@ -31,16 +31,10 @@ in
 
 **Note: When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the token data in `Sublime Text 3/Packages/User/SublimeEvernote.sublime-settings`**
 
-`Command Palette` > `Send to evernote`
-
-`Context menu` > `Send to Evernote`
-
-`Context menu` > `Evernote settings`
-
-# Some Modifications
-
-This version will work in Sublime Text 3 with Python 3, and it will also allow you to choose which
-notebook you would like to save your note to.
+`Command Palette` > `Evernote: Send to Evernote`
+`Command Palette` > `Evernote: Open Evernote Note`
+`Command Palette` > `Evernote: Update Evernote Note`
+`Command Palette` > `Evernote: Reconfigure`
 
 # Acknowledgements
 
