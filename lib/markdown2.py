@@ -61,6 +61,8 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
   some limitations.
 * metadata: Extract metadata from a leading '---'-fenced block.
   See <https://github.com/trentm/python-markdown2/issues/77> for details.
+* nofollow: Add `rel="nofollow"` to add `<a>` tags with an href. See
+  <http://en.wikipedia.org/wiki/Nofollow>.
 * pyshell: Treats unindented Python interactive shell sessions as <code>
   blocks.
 * link-patterns: Auto-link given regex patterns in text (e.g. bug number
@@ -80,7 +82,7 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 0, 2)
+__version_info__ = (2, 2, 1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
@@ -248,6 +250,10 @@ class Markdown(object):
         if "metadata" in self.extras:
             self.metadata = {}
 
+    # Per <https://developer.mozilla.org/en-US/docs/HTML/Element/a> "rel"
+    # should only be used in <a> tags with an "href" attribute.
+    _a_nofollow = re.compile(r"<(a)([^>]*href=)", re.IGNORECASE)
+
     def convert(self, text):
         """Convert the given text."""
         # Main function. The order in which other subs are called here is
@@ -302,6 +308,9 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
+        if "fenced-code-blocks" in self.extras:
+            text = self._do_fenced_code_blocks(text)
+
         if self.safe_mode:
             text = self._hash_html_spans(text)
 
@@ -327,6 +336,9 @@ class Markdown(object):
 
         if self.safe_mode:
             text = self._unhash_html_spans(text)
+
+        if "nofollow" in self.extras:
+            text = self._a_nofollow.sub(r'<\1 rel="nofollow"\2', text)
 
         text += "\n"
 
@@ -901,7 +913,10 @@ class Markdown(object):
             text = self._do_smart_punctuation(text)
 
         # Do hard breaks:
-        text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
+        if "break-on-newline" in self.extras:
+            text = re.sub(r" *\n", "<br%s\n" % self.empty_element_suffix, text)
+        else:
+            text = re.sub(r" {2,}\n", " <br%s\n" % self.empty_element_suffix, text)
 
         return text
 
@@ -991,22 +1006,14 @@ class Markdown(object):
             raise MarkdownError("invalid value for 'safe_mode': %r (must be "
                                 "'escape' or 'replace')" % self.safe_mode)
 
-    _tail_of_inline_link_re = re.compile(r'''
-          # Match tail of: [text](/url/) or [text](/url/ "title")
-          \(            # literal paren
-            [ \t]*
-            (?P<url>            # \1
-                <.*?>
-                |
-                .*?
-            )
-            [ \t]*
-            (                   # \2
-              (['"])            # quote char = \3
+    _inline_link_title = re.compile(r'''
+            (                   # \1
+              [ \t]+
+              (['"])            # quote char = \2
               (?P<title>.*?)
-              \3                # matching quote
+              \2
             )?                  # title is optional
-          \)
+          \)$
         ''', re.X | re.S)
     _tail_of_reference_link_re = re.compile(r'''
           # Match tail of: [text][id]
@@ -1016,6 +1023,52 @@ class Markdown(object):
             (?P<id>.*?)
           \]
         ''', re.X | re.S)
+
+    _whitespace = re.compile(r'\s*')
+
+    _strip_anglebrackets = re.compile(r'<(.*)>.*')
+
+    def _find_non_whitespace(self, text, start):
+        """Returns the index of the first non-whitespace character in text
+        after (and including) start
+        """
+        match = self._whitespace.match(text, start)
+        return match.end()
+
+    def _find_balanced(self, text, start, open_c, close_c):
+        """Returns the index where the open_c and close_c characters balance
+        out - the same number of open_c and close_c are encountered - or the
+        end of string if it's reached before the balance point is found.
+        """
+        i = start
+        l = len(text)
+        count = 1
+        while count > 0 and i < l:
+            if text[i] == open_c:
+                count += 1
+            elif text[i] == close_c:
+                count -= 1
+            i += 1
+        return i
+
+    def _extract_url_and_title(self, text, start):
+        """Extracts the url and (optional) title from the tail of a link"""
+        # text[start] equals the opening parenthesis
+        idx = self._find_non_whitespace(text, start+1)
+        if idx == len(text):
+            return None, None, None
+        end_idx = idx
+        has_anglebrackets = text[idx] == "<"
+        if has_anglebrackets:
+            end_idx = self._find_balanced(text, end_idx+1, "<", ">")
+        end_idx = self._find_balanced(text, end_idx, "(", ")")
+        match = self._inline_link_title.search(text, idx, end_idx)
+        if not match:
+            return None, None, None
+        url, title = text[idx:match.start()], match.group("title")
+        if has_anglebrackets:
+            url = self._strip_anglebrackets.sub(r'\1', url)
+        return url, title, end_idx
 
     def _do_links(self, text):
         """Turn Markdown link shortcuts into XHTML <a> and <img> tags.
@@ -1083,7 +1136,8 @@ class Markdown(object):
                 normed_id = re.sub(r'\W', '-', link_text[1:])
                 if normed_id in self.footnotes:
                     self.footnote_ids.append(normed_id)
-                    result = '<sup class="footnote-ref" id="fnref-%s">' \
+                    # result = '<sup class="footnote-ref" id="fnref-%s">' \
+                    result = '<sup id="fnref-%s">' \
                              '<a href="#fn-%s">%s</a></sup>' \
                              % (normed_id, normed_id, len(self.footnote_ids))
                     text = text[:start_idx] + result + text[p+1:]
@@ -1099,16 +1153,13 @@ class Markdown(object):
 
             # Inline anchor or img?
             if text[p] == '(': # attempt at perf improvement
-                match = self._tail_of_inline_link_re.match(text, p)
-                if match:
+                url, title, url_end_idx = self._extract_url_and_title(text, p)
+                if url is not None:
                     # Handle an inline anchor or img.
                     is_img = start_idx > 0 and text[start_idx-1] == "!"
                     if is_img:
                         start_idx -= 1
 
-                    url, title = match.group("url"), match.group("title")
-                    if url and url[0] == '<':
-                        url = url[1:-1]  # '<url>' -> 'url'
                     # We've got to encode these to avoid conflicting
                     # with italics/bold.
                     url = url.replace('*', self._escape_table['*']) \
@@ -1121,14 +1172,15 @@ class Markdown(object):
                     else:
                         title_str = ''
                     if is_img:
-                        result = '<img src="%s" alt="%s"%s%s' \
+                        img_class_str = self._html_class_str_from_tag("img")
+                        result = '<img src="%s" alt="%s"%s%s%s' \
                             % (url.replace('"', '&quot;'),
                                _xml_escape_attr(link_text),
-                               title_str, self.empty_element_suffix)
+                               title_str, img_class_str, self.empty_element_suffix)
                         if "smarty-pants" in self.extras:
                             result = result.replace('"', self._escape_table['"'])
                         curr_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[match.end():]
+                        text = text[:start_idx] + result + text[url_end_idx:]
                     elif start_idx >= anchor_allowed_pos:
                         result_head = '<a href="%s"%s>' % (url, title_str)
                         result = '%s%s</a>' % (result_head, link_text)
@@ -1138,7 +1190,7 @@ class Markdown(object):
                         # anchor_allowed_pos on.
                         curr_pos = start_idx + len(result_head)
                         anchor_allowed_pos = start_idx + len(result)
-                        text = text[:start_idx] + result + text[match.end():]
+                        text = text[:start_idx] + result + text[url_end_idx:]
                     else:
                         # Anchor not allowed here.
                         curr_pos = start_idx + 1
@@ -1171,10 +1223,11 @@ class Markdown(object):
                         else:
                             title_str = ''
                         if is_img:
-                            result = '<img src="%s" alt="%s"%s%s' \
+                            img_class_str = self._html_class_str_from_tag("img")
+                            result = '<img src="%s" alt="%s"%s%s%s' \
                                 % (url.replace('"', '&quot;'),
                                    link_text.replace('"', '&quot;'),
-                                   title_str, self.empty_element_suffix)
+                                   title_str, img_class_str, self.empty_element_suffix)
                             if "smarty-pants" in self.extras:
                                 result = result.replace('"', self._escape_table['"'])
                             curr_pos = start_idx + len(result)
@@ -1235,44 +1288,39 @@ class Markdown(object):
             self._toc = []
         self._toc.append((level, id, self._unescape_special_chars(name)))
 
-    _setext_h_re = re.compile(r'^(.+)[ \t]*\n(=+|-+)[ \t]*\n+', re.M)
-    def _setext_h_sub(self, match):
-        n = {"=": 1, "-": 2}[match.group(2)[0]]
-        demote_headers = self.extras.get("demote-headers")
-        if demote_headers:
-            n = min(n + demote_headers, 6)
-        header_id_attr = ""
-        if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(match.group(1),
-                self.extras["header-ids"], n)
-            if header_id:
-                header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(match.group(1))
-        if "toc" in self.extras and header_id:
-            self._toc_add_entry(n, header_id, html)
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
-
-    _atx_h_re = re.compile(r'''
-        ^(\#{1,6})  # \1 = string of #'s
+    _h_re = re.compile(r'''
+        (^(.+)[ \t]*\n(=+|-+)[ \t]*\n+)
+        |
+        (^(\#{1,6})  # \1 = string of #'s
         [ \t]+
         (.+?)       # \2 = Header text
         [ \t]*
         (?<!\\)     # ensure not an escaped trailing '#'
         \#*         # optional closing #'s (not counted)
         \n+
+        )
         ''', re.X | re.M)
-    def _atx_h_sub(self, match):
-        n = len(match.group(1))
+
+    def _h_sub(self, match):
+        if match.group(1) is not None:
+            # Setext header
+            n = {"=": 1, "-": 2}[match.group(3)[0]]
+            header_group = match.group(2)
+        else:
+            # atx header
+            n = len(match.group(5))
+            header_group = match.group(6)
+
         demote_headers = self.extras.get("demote-headers")
         if demote_headers:
             n = min(n + demote_headers, 6)
         header_id_attr = ""
         if "header-ids" in self.extras:
-            header_id = self.header_id_from_text(match.group(2),
+            header_id = self.header_id_from_text(header_group,
                 self.extras["header-ids"], n)
             if header_id:
                 header_id_attr = ' id="%s"' % header_id
-        html = self._run_span_gamut(match.group(2))
+        html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
         return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
@@ -1284,7 +1332,6 @@ class Markdown(object):
         #
         #     Header 2
         #     --------
-        text = self._setext_h_re.sub(self._setext_h_sub, text)
 
         # atx-style headers:
         #   # Header 1
@@ -1292,8 +1339,8 @@ class Markdown(object):
         #   ## Header 2 with closing hashes ##
         #   ...
         #   ###### Header 6
-        text = self._atx_h_re.sub(self._atx_h_sub, text)
 
+        text = self._h_re.sub(self._h_sub, text)
         return text
 
 
@@ -1512,6 +1559,9 @@ class Markdown(object):
               )+
             )
             ((?=^[ ]{0,%d}\S)|\Z)   # Lookahead for non-space at line-start, or end of doc
+            # Lookahead to make sure this block isn't already in a code block.
+            # Needed when syntax highlighting is being used.
+            (?![^<]*\</code\>)
             ''' % (self.tab_width, self.tab_width),
             re.M | re.X)
         return code_block_re.sub(self._code_block_sub, text)
@@ -1740,7 +1790,7 @@ class Markdown(object):
                 footer.append('<li id="fn-%s">' % id)
                 footer.append(self._run_block_gamut(self.footnotes[id]))
                 backlink = ('<a href="#fnref-%s" '
-                    'class="footnoteBackLink" '
+                    # 'class="footnoteBackLink" '
                     'title="Jump back to footnote %d in the text.">'
                     '&#8617;</a>' % (id, i+1))
                 if footer[-1].endswith("</p>"):
@@ -1934,12 +1984,8 @@ def _slugify(value):
 
     From Django's "django/template/defaultfilters.py".
     """
-    try:
-        import unicodedata
-        value = unicodedata.normalize('NFKD', value)
-    except ImportError:
-        pass
-    value = value.encode('ascii', 'ignore').decode()
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode()
     value = _slugify_strip_re.sub('', value).strip().lower()
     return _slugify_hyphenate_re.sub('-', value)
 ## end of http://code.activestate.com/recipes/577257/ }}}
