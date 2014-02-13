@@ -7,5 +7,7 @@
         {
             "file": "${packages}/User/SublimeEvernote.sublime-settings"
         }
-    }        
+    }, 
+    { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },    
+    { "command": "reconfig_evernote", "caption": "Evernote: Reconfigure" }
 ]
