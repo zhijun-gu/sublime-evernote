@@ -27,9 +27,12 @@ package_file = os.path.normpath(os.path.abspath(__file__))
 package_path = os.path.dirname(package_file)
 lib_path = os.path.join(package_path, "lib")
 
-if sys.version_info.major == 2:
+PY2 = sys.version_info.major == 2
+PY3 = sys.version_info.major == 3
+
+if PY2:
     evernote_path = os.path.join(package_path, "lib", "evernote-sdk-python", "lib")
-if sys.version_info.major == 3:
+else:
     evernote_path = os.path.join(package_path, "lib", "evernote-sdk-python3", "lib")
 
 if lib_path not in sys.path:
@@ -40,9 +43,9 @@ if evernote_path not in sys.path:
 import evernote.edam.type.ttypes as Types
 import evernote.edam.error.ttypes as Errors
 
-if sys.version_info.major == 2:
+if PY2:
     from evernote.api.client import EvernoteClient
-if sys.version_info.major == 3:
+else:
     import evernote.edam.userstore.UserStore as UserStore
     import evernote.edam.notestore.NoteStore as NoteStore
     import thrift.protocol.TBinaryProtocol as TBinaryProtocol
@@ -53,6 +56,8 @@ import sublime_plugin
 import webbrowser
 import markdown2
 
+ST3 = int(sublime.version()) >= 3000
+
 
 def LOG(*args):
     print("Evernote: ", *args)
@@ -61,29 +66,54 @@ USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 
+if PY2:
+    def enc(txt):
+        return txt.encode('utf-8')
+else:
+    def enc(txt):
+        return txt
 
-# Top level calls to sublime are ignored in Sublime Text 3 at startup!
-# settings = sublime.load_settings(EVERNOTE_SETTINGS)
+
+def to_html(view):
+    if view:
+        region = sublime.Region(0, view.size())
+        contents = view.substr(region)
+        md = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'cuddled-lists', 'code-friendly', 'metadata'])
+        return enc(md)
+    return ""
 
 
-class SendToEvernoteCommand(sublime_plugin.TextCommand):
+def to_note_contents(view):
+    html = to_html(view)
+    content = '<?xml version="1.0" encoding="UTF-8"?>'
+    content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
+    content += '<en-note>'
+    content += html
+    content += '</en-note>'
+    return content
 
-    def __init__(self, view):
-        self.view = view
-        self.window = sublime.active_window()
-        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
 
-    def to_markdown_html(self):
-        region = sublime.Region(0, self.view.size())
-        encoding = self.view.encoding()
-        if encoding == 'Undefined':
-            encoding = 'utf-8'
-        elif encoding == 'Western (Windows 1252)':
-            encoding = 'windows-1252'
-        contents = self.view.substr(region)
-        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'codehilite', 'cuddled-lists', 'code-friendly', 'metadata'])
-        return markdown_html
+if ST3:
+    def append_to_view(view, text):
+        view.run_command('append', {
+            'characters': text,
+        })
+        return view
+else:
+    def append_to_view(view, text):
+        new_edit = view.begin_edit()
+        view.insert(new_edit, view.size(), text)
+        view.end_edit(new_edit)
+        return view
 
+
+class EvernoteDo():
+
+    _noteStore = None
+    _notebooks = None
+    
+    def token(self):
+        return self.settings.get("token")
 
     def connect(self, callback, **kwargs):
         sublime.status_message("initializing..., please wait...")
@@ -110,7 +140,7 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
 
         def on_token(token):
             noteStoreUrl = self.settings.get("noteStoreUrl")
-            if (sys.version_info.major == 3) and (not noteStoreUrl):
+            if PY3 and (not noteStoreUrl):
                  noteStoreUrl = __derive_note_store_url(token)
             __connect(token, noteStoreUrl)
 
@@ -124,76 +154,97 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             webbrowser.open_new_tab("https://www.evernote.com/api/DeveloperToken.action")
             self.window.show_input_panel("Developer Token (required):", "", on_token, None, None)
 
-    def send_note(self, **kwargs):
-        token = self.settings.get("token")
-
-        if sys.version_info.major == 2:
-            noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
-        if sys.version_info.major == 3:
+    def get_note_store(self):
+        if EvernoteDo._noteStore:
+            return EvernoteDo._noteStore
+        if PY2:
+            noteStore = EvernoteClient(token=self.token(), sandbox=False).get_note_store()
+        else:
             noteStoreUrl = self.settings.get("noteStoreUrl")
             LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
-            LOG("I've got this for token -->{0}<--".format(token))
+            LOG("I've got this for token -->{0}<--".format(self.token()))
             noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
             noteStoreHttpClient.setCustomHeaders(USER_AGENT)
             noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
             noteStore = NoteStore.Client(noteStoreProtocol)
+        EvernoteDo._noteStore = noteStore
+        return noteStore
 
-        markdown_html = self.to_markdown_html()
+    def get_notebooks(self):
+        if EvernoteDo._notebooks:
+            return EvernoteDo._notebooks
+        notebooks = None
+        try:
+            noteStore = self.get_note_store()
+            sublime.status_message("Fetching notebooks, please wait...")
+            if PY2:
+                notebooks = noteStore.listNotebooks()
+            else:
+                notebooks = noteStore.listNotebooks(self.token())
+            sublime.status_message("Fetched all notebooks!")
+        except Exception as e:
+            sublime.error_message('Error getting notebooks: %s' % e)
+        EvernoteDo._notebooks = notebooks
+        return notebooks
+
+class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
+    def run(self,edit, **kwargs):
+        self.window = sublime.active_window()
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        if not self.token():
+            self.connect(lambda **kw:self.do_run(edit, **kw), **kwargs)
+        else:
+            self.do_run(edit, **kwargs)
+
+class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
+    def run(self, **kwargs):
+        self.window = sublime.active_window()
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        if not self.token():
+            self.connect(self.do_run, **kwargs)
+        else:
+            self.do_run(**kwargs)
+
+
+class SendToEvernoteCommand(EvernoteDoText):
+
+    def do_run(self, edit, **kwargs):
+        self.do_send(**kwargs)
+
+    def do_send(self, **kwargs):
 
         def __send_note(title, notebookGuid, tags):
-
+            noteStore = self.get_note_store()
             note = Types.Note()
 
-            if sys.version_info.major == 2:
-                note.title = title.encode('utf-8')
-            if sys.version_info.major == 3:
-                note.title = title
+            note.title = enc(title)
 
-            note.content = '<?xml version="1.0" encoding="UTF-8"?>'
-            note.content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
-            note.content += '<en-note>'
-
-            if sys.version_info.major == 2:
-                note.content += markdown_html.encode('utf-8')
-            if sys.version_info.major == 3:
-                note.content += markdown_html
-
-            note.content += '</en-note>'
+            note.content = to_note_contents(self.view)
 
             note.notebookGuid = notebookGuid
             note.tagNames = tags and tags.split(",") or []
 
             try:
                 sublime.status_message("Posting note, please wait...")
-                if sys.version_info.major == 2:
+                if PY2:
                     cnote = noteStore.createNote(note)
-                if sys.version_info.major == 3:
-                    cnote = noteStore.createNote(token, note)
+                else:
+                    cnote = noteStore.createNote(self.token(), note)
                 sublime.status_message("Successfully posted note: guid:%s" % cnote.guid)
+                self.view.settings().set("$evernote", True)
+                self.view.settings().set("$evernote_guid", cnote.guid)
+                self.view.settings().set("$evernote_title", cnote.title)
             except Errors.EDAMUserException as e:
                 args = dict(title=title, notebookGuid=notebookGuid, tags=tags)
                 if e.errorCode == 9:
-                    self.connect(self. send_note, **args)
+                    self.connect(self.do_send, **args)
                 else:
                     if sublime.ok_cancel_dialog('Error %s! retry?' % e):
-                        self.connect(self.send_note, **args)
+                        self.connect(self.do_send, **args)
             except Exception as e:
                 sublime.error_message('Error %s' % e)
 
-        def __get_notebooks():
-            notebooks = None
-            try:
-                sublime.status_message("Fetching notebooks, please wait...")
-                if sys.version_info.major == 2:
-                    notebooks = noteStore.listNotebooks()
-                if sys.version_info.major == 3:
-                    notebooks = noteStore.listNotebooks(token)
-                sublime.status_message("Fetched all notebooks!")
-            except Exception as e:
-                sublime.error_message('Error getting notebooks: %s' % e)
-            return notebooks
-
-        notebooks = __get_notebooks()
+        notebooks = self.get_notebooks()
         def on_title(title):
             def on_tags(tags):
                 def on_notebook(notebook):
@@ -207,64 +258,72 @@ class SendToEvernoteCommand(sublime_plugin.TextCommand):
             __send_note(kwargs.get("title"), kwargs.get("notebookGuid"), kwargs.get("tags"))
 
 
-    def run(self, edit):
-        if not self.settings.get("token"):
-            self.connect(self.send_note)
-        else:
-            self.send_note()
+class SaveEvernoteNoteCommand(EvernoteDoText):
 
+    def do_run(self, edit):
+        note = Types.Note()
+        title = self.view.settings().get("$evernote_title")
+        guid = self.view.settings().get("$evernote_guid")
 
-class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
+        note.title = enc(title)
+        note.guid = enc(guid)
 
-    def __init__(self, window):
-        self.window = window
-        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        note.content = to_note_contents(self.view)
 
-    def run(self):
-        from html2text import html2text
+        noteStore = self.get_note_store()
 
-        token = self.settings.get("token")
-
-        # TODO: refactor pop out in def
-        if sys.version_info.major == 2:
-            noteStore = EvernoteClient(token=token, sandbox=False).get_note_store()
-        if sys.version_info.major == 3:
-            noteStoreUrl = self.settings.get("noteStoreUrl")
-            LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
-            LOG("I've got this for token -->{0}<--".format(token))
-            noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-            noteStoreHttpClient.setCustomHeaders(USER_AGENT)
-            noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
-            noteStore = NoteStore.Client(noteStoreProtocol)
-
-        # TODO: refactor, join with __get_notebooks and caching (with reset after timeout)
-        notebooks = None
         try:
-            sublime.status_message("Fetching notebooks, please wait...")
-            if sys.version_info.major == 2:
-                notebooks = noteStore.listNotebooks()
-            if sys.version_info.major == 3:
-                notebooks = noteStore.listNotebooks(token)
-            sublime.status_message("Fetched all notebooks!")
+            sublime.status_message("Updating note, please wait...")
+            if PY2:
+                cnote = noteStore.updateNote(note)
+            else:
+                cnote = noteStore.updateNote(self.token(), note)
+            self.view.settings().set("$evernote", True)
+            self.view.settings().set("$evernote_guid", cnote.guid)
+            self.view.settings().set("$evernote_title", cnote.title)
+            sublime.status_message("Successfully updated note: guid:%s" % cnote.guid)
+        except Errors.EDAMUserException as e:
+            args = dict(title=title, notebookGuid=notebookGuid, tags=tags)
+            if e.errorCode == 9:
+                self.connect(self.do_run, **args)
+            else:
+                if sublime.ok_cancel_dialog('Error %s! retry?' % e):
+                    self.connect(self.do_run, **args)
         except Exception as e:
-            sublime.error_message('Error getting notebooks: %s' % e)
+            sublime.error_message('Error %s' % e)
+
+    def is_enabled(self):
+        if self.view.settings().get("$evernote_guid", False):
+            return True
+        return False
+
+
+class OpenEvernoteNoteCommand(EvernoteDoWindow):
+
+    def do_run(self):
+        from html2text import html2text
+        noteStore = self.get_note_store()
+        notebooks = self.get_notebooks()
 
         def on_notebook(notebook):
             nid = notebooks[notebook].guid
             notes = noteStore.findNotesMetadata(
-                token, NoteStore.NoteFilter(notebookGuid=nid),
+                self.token(), NoteStore.NoteFilter(notebookGuid=nid),
                 0,
                 100,
                 NoteStore.NotesMetadataResultSpec(includeTitle=True)).notes
+            notes.reverse()
             def on_note(i):
-                note = noteStore.getNote(token, notes[i].guid, True, False, False, False)
+                # TODO: api v2
+                note = noteStore.getNote(self.token(), notes[i].guid, True, False, False, False)
                 newview = self.window.new_file()
                 newview.set_scratch(True)
                 newview.set_name(note.title)
                 mdtxt = html2text(note.content)
-                newview.settings().set("auto_indent", False)
+                newview.settings().set("$evernote", True)
                 newview.settings().set("$evernote_guid", note.guid)
-                newview.run_command("insert", {"characters": mdtxt})
+                newview.settings().set("$evernote_title", note.title)
+                append_to_view(newview, mdtxt)
                 syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
                 newview.set_syntax_file(syntax)
                 newview.show(0)
@@ -273,3 +332,10 @@ class OpenEvernoteNoteCommand(sublime_plugin.WindowCommand):
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
         self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
 
+
+class ReconfigEvernoteCommand(EvernoteDoWindow):
+
+    def run(self):
+        self.window = sublime.active_window()
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        self.connect(lambda: True)
