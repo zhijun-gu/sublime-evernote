@@ -144,7 +144,7 @@ class EvernoteDo():
                  noteStoreUrl = __derive_note_store_url(token)
             __connect(token, noteStoreUrl)
 
-        token = self.settings.get("token")
+        token = self.token()
         if token:
             noteStoreUrl = self.settings.get("noteStoreUrl")
             if not noteStoreUrl:
@@ -338,4 +338,5 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
     def run(self):
         self.window = sublime.active_window()
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        self.settings.erase("token")
         self.connect(lambda: True)
