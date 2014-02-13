@@ -1,3 +1,6 @@
 [
-  { "keys": ["ctrl+alt+e"], "command": "send_to_evernote" }
+  { "keys": ["ctrl+alt+e"], "command": "send_to_evernote" },
+  { "keys": ["ctrl+s"], "command": "save_evernote_note",
+    "context": [{ "key": "setting.$evernote", "operator": "equal", "operand": true }]
+  }
 ]
