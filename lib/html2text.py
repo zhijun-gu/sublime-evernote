@@ -35,6 +35,9 @@ import optparse, re, sys, codecs, types
 try: from textwrap import wrap
 except: pass
 
+if sys.version_info.major == 3:
+    xrange = range
+
 # Use Unicode characters instead of their ascii psuedo-replacements
 UNICODE_SNOB = 0
 
