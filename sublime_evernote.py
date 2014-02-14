@@ -70,12 +70,25 @@ else:
     def enc(txt):
         return txt
 
+MD_EXTRAS = {
+    'footnotes'          : None,
+    'fenced-code-blocks' : None,
+    'cuddled-lists'      : None,
+    'code-friendly'      : None,
+    'metadata'           : None,
+    # This should be loaded from settings!
+    'inline-css'         : {
+        'pre': "color: #000000; font-family: monospace,monospace; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; background-color: #f8f8f8; border: 1px solid #cccccc; border-radius: 3px 3px 3px 3px; overflow: auto; padding: 6px 10px;",
+        'code': "color: black; font-family: monospace,monospace; font-size: 0.9em;"
+    }
+}
+
 
 def to_html(view):
     if view:
         region = sublime.Region(0, view.size())
         contents = view.substr(region)
-        md = markdown2.markdown(contents, extras=['footnotes', 'fenced-code-blocks', 'cuddled-lists', 'code-friendly', 'metadata'])
+        md = markdown2.markdown(contents, extras=MD_EXTRAS)
         return enc(md)
     return ""
 
