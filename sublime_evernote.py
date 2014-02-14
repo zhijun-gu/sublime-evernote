@@ -316,6 +316,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
         notebooks = self.get_notebooks()
 
         def on_notebook(notebook):
+            if notebook < 0:
+                return
             nid = notebooks[notebook].guid
             notes = noteStore.findNotesMetadata(
                 self.token(), NoteStore.NoteFilter(notebookGuid=nid),
@@ -324,6 +326,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 NoteStore.NotesMetadataResultSpec(includeTitle=True)).notes
             notes.reverse()
             def on_note(i):
+                if i < 0:
+                    return
                 # TODO: api v2
                 note = noteStore.getNote(self.token(), notes[i].guid, True, False, False, False)
                 newview = self.window.new_file()
