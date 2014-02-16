@@ -25,8 +25,8 @@ package_file = os.path.normpath(os.path.abspath(__file__))
 package_path = os.path.dirname(package_file)
 lib_path = os.path.join(package_path, "lib")
 
-PY2 = sys.version_info.major == 2
-PY3 = sys.version_info.major == 3
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
 
 if PY2:
     evernote_path = os.path.join(package_path, "lib", "evernote-sdk-python", "lib")
