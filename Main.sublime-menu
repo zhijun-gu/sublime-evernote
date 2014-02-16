@@ -22,9 +22,18 @@
                             },
                             { "caption": "-" },
                             {
+                                "command": "reconfig_evernote",
+                                "caption": "Reconfigure Authorisation"
+                            },
+                            {
                                 "command": "open_file",
                                 "args": {"file": "${packages}/Evernote/Evernote.sublime-settings"},
                                 "caption": "Settings – Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/User/Evernote.sublime-settings"},
+                                "caption": "Settings – User"
                             }
                         ]
                     }
