@@ -89,6 +89,7 @@ The `tags` field can be an unquoted list or a json list such as `["my long tag",
  * Port to ST3:
      - [rekotan](https://github.com/rekotan/SublimeEvernote)
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
+ * Open/Update/Two way Metadata features:  [bordaigorl](https://github.com/bordaigorl/sublime-evernote)
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
  * HTML2Markdown: [Aaron Swartz](https://github.com/aaronsw/html2text)
  * Evernote API: <https://github.com/evernote/evernote-sdk-python>
