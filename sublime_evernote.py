@@ -58,7 +58,8 @@ ST3 = int(sublime.version()) >= 3000
 
 
 def LOG(*args):
-    print("Evernote: ", *args)
+    # print ("Evernote: "+ ' '.join(str(a) for a in args))
+    pass
 
 USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
 
