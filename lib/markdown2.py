@@ -1323,7 +1323,8 @@ class Markdown(object):
         html = self._run_span_gamut(header_group)
         if "toc" in self.extras and header_id:
             self._toc_add_entry(n, header_id, html)
-        return "<h%d%s>%s</h%d>\n\n" % (n, header_id_attr, html, n)
+        hsty = self._html_class_str_from_tag("h%d" % n)
+        return "<h%d%s%s>%s</h%d>\n\n" % (n, header_id_attr, hsty, html, n)
 
     def _do_headers(self, text):
         # Setext-style headers:
