@@ -363,7 +363,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 
 class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
-    def do_run(self):
+    def do_run(self, convert=True):
         from html2text import html2text
         noteStore = self.get_note_store()
         notebooks = self.get_notebooks()
@@ -388,27 +388,31 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 newview = self.window.new_file()
                 newview.set_scratch(True)
                 newview.set_name(note.title)
-                try:
-                    mdtxt = html2text(note.content)
-                    LOG("Conversion ok")
-                except:
-                    mdtxt = note.content
-                    LOG("Conversion failed")
-                    LOG(mdtxt)
-                tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
-                meta = "---\n"
-                meta += "title: %s\n" % (note.title or "Untitled")
-                meta += "tags: %s\n" % (json.dumps(tags))
-                meta += "notebook: %s\n" % notebooks[notebook].name
-                meta += "---\n\n"
-                newview.settings().set("$evernote", True)
-                newview.settings().set("$evernote_guid", note.guid)
-                newview.settings().set("$evernote_title", note.title)
-                append_to_view(newview, meta+mdtxt)
-                syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
+                if convert:
+                    try:
+                        mdtxt = html2text(note.content)
+                        LOG("Conversion ok")
+                    except:
+                        mdtxt = note.content
+                        LOG("Conversion failed")
+                        LOG(mdtxt)
+                    tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
+                    meta = "---\n"
+                    meta += "title: %s\n" % (note.title or "Untitled")
+                    meta += "tags: %s\n" % (json.dumps(tags))
+                    meta += "notebook: %s\n" % notebooks[notebook].name
+                    meta += "---\n\n"
+                    newview.settings().set("$evernote", True)
+                    newview.settings().set("$evernote_guid", note.guid)
+                    newview.settings().set("$evernote_title", note.title)
+                    append_to_view(newview, meta+mdtxt)
+                    syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
+                else:
+                    syntax = "Packages/XML/XML.tmLanguage"
+                    append_to_view(newview, note.content)
                 newview.set_syntax_file(syntax)
                 newview.show(0)
-                sublime.status_message("Note \"%s\" opened!" % notes[i].title)
+                sublime.status_message("Note \"%s\" opened!" % note.title)
 
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
         self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
