@@ -253,7 +253,7 @@ class SendToEvernoteCommand(EvernoteDoText):
         if "notebookGuid" in args:
             note.notebookGuid = args["notebookGuid"]
         if "tags" in args:
-            note.tagNames = extractTags(tags)
+            note.tagNames = extractTags(args["tags"])
 
         notebooks = self.get_notebooks()
         populate_note(note, self.view, notebooks)
