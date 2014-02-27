@@ -214,6 +214,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             self.outtext = str()
 
         self.quiet = 0
+        self.ignore = False
         self.p_p = 0  # number of newline character to print before next output
         self.outcount = 0
         self.start = 1
@@ -527,10 +528,12 @@ class HTML2Text(HTMLParser.HTMLParser):
             if start:
                 if self.google_doc:
                     list_style = google_list_style(tag_style)
+                elif attrs.get('title', "") == "footnotes":
+                    list_style = "fn"
                 else:
                     list_style = tag
                 numbering_start = list_numbering_start(attrs)
-                self.list.append({'name':list_style, 'num':numbering_start})
+                self.list.append({'name': list_style, 'num': numbering_start})
             else:
                 if self.list: self.list.pop()
             self.lastWasList = True
@@ -540,6 +543,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         if tag == 'li':
             self.pbr()
             if start:
+                li_title = attrs.get('title', "")
                 if self.list: li = self.list[-1]
                 else: li = {'name':'ul', 'num':0}
                 if self.google_doc:
@@ -551,7 +555,21 @@ class HTML2Text(HTMLParser.HTMLParser):
                 elif li['name'] == "ol":
                     li['num'] += 1
                     self.o(str(li['num'])+". ")
+                elif li['name'] == "fn" and li_title.startswith("fn-"):
+                    self.o("[^%s]: " % li_title[3:])
                 self.start = 1
+
+        # This is for support of footnotes
+        # it could be adapted to lookup the id attr instead of title
+        # but Evernote only allows title
+        if tag == "sup":
+            if start:
+                sup_title = attrs.get('title', "")
+                if sup_title:
+                    self.o("[^%s]" % sup_title)
+                    self.ignore = True
+            else:
+                self.ignore = False
 
         if tag in ["table", "tr"] and start: self.p()
         if tag == 'td': self.pbr()
@@ -663,6 +681,9 @@ class HTML2Text(HTMLParser.HTMLParser):
     def handle_data(self, data):
         if r'\/script>' in data: self.quiet -= 1
 
+        if self.ignore:
+            return
+
         if self.style:
             self.style_def.update(dumb_css_parser(data))
 
@@ -677,6 +698,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if not self.code and not self.pre:
             data = escape_md_section(data, snob=self.escape_snob)
+
         self.o(data, 1)
 
     def unknown_decl(self, data): pass
