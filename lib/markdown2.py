@@ -797,7 +797,8 @@ class Markdown(object):
         # you wish, you may use spaces between the hyphens or asterisks."
         # Markdown.pl 1.0.1's hr regexes limit the number of spaces between the
         # hr chars to one or two. We'll reproduce that limit here.
-        hr = "\n<hr"+self.empty_element_suffix+"\n"
+        hr = "\n<hr%s"+self.empty_element_suffix+"\n"
+        hr = hr % self._html_class_str_from_tag("hr")
         for ch, regex in self._hr_data:
             if ch in text:
                 for m in reversed(list(regex.finditer(text))):
@@ -1137,9 +1138,10 @@ class Markdown(object):
                 if normed_id in self.footnotes:
                     self.footnote_ids.append(normed_id)
                     # result = '<sup class="footnote-ref" id="fnref-%s">' \
-                    result = '<sup id="fnref-%s">' \
-                             '<a href="#fn-%s">%s</a></sup>' \
-                             % (normed_id, normed_id, len(self.footnote_ids))
+                    # result = '<sup id="fnref-%s"><a href="#fn-%s">%s</a></sup>' \
+                    #          % (normed_id, normed_id, len(self.footnote_ids))
+                    result = '<sup title="%s"%s>%s</sup>' \
+                             % (normed_id, self._html_class_str_from_tag("sup"), len(self.footnote_ids))
                     text = text[:start_idx] + result + text[p+1:]
                 else:
                     # This id isn't defined, leave the markup alone.
@@ -1481,19 +1483,31 @@ class Markdown(object):
         import pygments
         import pygments.formatters
 
+        pre_class_str = self._html_class_str_from_tag("pre")
+        code_class_str = self._html_class_str_from_tag("code")
+
         class HtmlCodeFormatter(pygments.formatters.HtmlFormatter):
             def _wrap_code(self, inner):
                 """A function for use in a Pygments Formatter which
                 wraps in <code> tags.
                 """
-                yield 0, "<code>"
+                pre_style = pre_class_str
+                lang_code = ""
+                if hasattr(lexer, 'orig_name'):
+                    lang_code = ' title="%s"' % lexer.orig_name
+                if self.style.background_color and pre_style.startswith(' style'):
+                    pre_style = pre_style[0:-1] + 'background-color:' + self.style.background_color + ';"'
+                yield 0, "<pre%s%s>" % (lang_code, pre_style)
+                yield 0, "<code%s>" % code_class_str
                 for tup in inner:
                     yield tup
                 yield 0, "</code>"
+                yield 0, "</pre>"
 
             def wrap(self, source, outfile):
                 """Return the source with a code, pre, and div."""
-                return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                # return self._wrap_div(self._wrap_pre(self._wrap_code(source)))
+                return self._wrap_code(source)
 
         formatter_opts.setdefault("cssclass", "codehilite")
         formatter = HtmlCodeFormatter(**formatter_opts)
@@ -1523,6 +1537,7 @@ class Markdown(object):
 
         if lexer_name:
             lexer = self._get_pygments_lexer(lexer_name)
+            setattr(lexer, 'orig_name', lexer_name)
             if lexer:
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
@@ -1784,19 +1799,24 @@ class Markdown(object):
     def _add_footnotes(self, text):
         if self.footnotes:
             footer = [
-                '<div class="footnotes">',
-                '<hr' + self.empty_element_suffix,
-                '<ol>',
+                '<div%s>' % (self._html_class_str_from_tag("footnotes") or 'class="footnotes"'),
+                # suppressing hr because it complicates parsing in html2text
+                # ('<hr%s' % self._html_class_str_from_tag("hr")) + self.empty_element_suffix,
+                # setting the title (id is not available in Evernote) for easy detection in html2text
+                '<ol title="footnotes">',
             ]
             for i, id in enumerate(self.footnote_ids):
                 if i != 0:
                     footer.append('')
-                footer.append('<li id="fn-%s">' % id)
+                # footer.append('<li>')
+                # footer.append('<li id="fn-%s">' % id)
+                footer.append('<li title="fn-%s">' % id)
                 footer.append(self._run_block_gamut(self.footnotes[id]))
-                backlink = ('<a href="#fnref-%s" '
-                    # 'class="footnoteBackLink" '
-                    'title="Jump back to footnote %d in the text.">'
-                    '&#8617;</a>' % (id, i+1))
+                # backlink = ('<a href="#fnref-%s" '
+                #     # 'class="footnoteBackLink" '
+                #     'title="Jump back to footnote %d in the text.">'
+                #     '&#8617;</a>' % (id, i+1))
+                backlink = ""
                 if footer[-1].endswith("</p>"):
                     footer[-1] = footer[-1][:-len("</p>")] \
                         + '&nbsp;' + backlink + "</p>"
