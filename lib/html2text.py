@@ -576,11 +576,19 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag == "pre":
             if start:
+                if attrs.get('title'):
+                    self.o("```%s" % attrs['title'])
+                    self.pre = "fenced"
+                else:
+                    self.pre = "indent"
+                    self.p()
                 self.startpre = 1
-                self.pre = 1
             else:
+                prepre = self.pre
                 self.pre = 0
-            self.p()
+                if prepre == "fenced":
+                    self.o("```")
+                self.p()
 
     def pbr(self):
         if self.p_p == 0:
@@ -621,7 +629,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             bq = (">" * self.blockquote)
             if not (force and data and data[0] == ">") and self.blockquote: bq += " "
 
-            if self.pre:
+            if self.pre == "indent":
                 if not self.list:
                     bq += "    "
                 #else: list content is already partially indented
@@ -755,24 +763,35 @@ class HTML2Text(HTMLParser.HTMLParser):
         assert wrap, "Requires Python 2.3."
         result = ''
         newlines = 0
+        in_fence = False
         for para in text.split("\n"):
-            if len(para) > 0:
-                if not skipwrap(para):
-                    result += "\n".join(wrap(para, self.body_width))
-                    if para.endswith('  '):
-                        result += "  \n"
-                        newlines = 1
-                    else:
-                        result += "\n\n"
-                        newlines = 2
+            if in_fence:
+                if para.lstrip(' \t').startswith("`" * in_fence):
+                    in_fence = False
+                    result += para + "\n\n"
                 else:
-                    if not onlywhite(para):
-                        result += para + "\n"
-                        newlines = 1
+                    result += para + "\n"
+            elif para.lstrip(' \t').startswith("```"):
+                in_fence = para.count("`")
+                result += para + "\n"
             else:
-                if newlines < 2:
-                    result += "\n"
-                    newlines += 1
+                if len(para) > 0:
+                    if not skipwrap(para):
+                        result += "\n".join(wrap(para, self.body_width))
+                        if para.endswith('  '):
+                            result += "  \n"
+                            newlines = 1
+                        else:
+                            result += "\n\n"
+                            newlines = 2
+                    else:
+                        if not onlywhite(para):
+                            result += para + "\n"
+                            newlines = 1
+                else:
+                    if newlines < 2:
+                        result += "\n"
+                        newlines += 1
         return result
 
 ordered_list_matcher = re.compile(r'\d+\.\s')
