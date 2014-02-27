@@ -412,22 +412,25 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     meta += "tags: %s\n" % (json.dumps(tags))
                     meta += "notebook: %s\n" % notebooks[notebook].name
                     meta += "---\n\n"
-                    try:
-                        builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
-                        if builtin >= 0:
+                    builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
+                    if builtin >= 0:
+                        try:
                             builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
                             bmdtxt = note.content[builtin+len(SUBLIME_EVERNOTE_COMMENT_BEG):builtin_end]
                             LOG(bmdtxt)
                             mdtxt = b64decode(bmdtxt.encode('utf8')).decode('utf8')
                             meta = ""
                             LOG("Loaded from built-in comment")
-                        else:
+                        except Exception as e:
+                            mdtxt = ""
+                            LOG("Loading from built-in comment failed", e)
+                    if builtin < 0 or mdtxt == "":
+                        try:
                             mdtxt = html2text(note.content)
                             LOG("Conversion ok")
-                    except Exception as e:
-                        mdtxt = note.content
-                        mdtxt = html2text(note.content)
-                        LOG("Conversion failed", e)
+                        except Exception as e:
+                            mdtxt = note.content
+                            LOG("Conversion failed", e)
                     newview.settings().set("$evernote", True)
                     newview.settings().set("$evernote_guid", note.guid)
                     newview.settings().set("$evernote_title", note.title)
