@@ -106,6 +106,15 @@ def hn(tag):
             if n in range(1, 10): return n
         except ValueError: return 0
 
+def tag_str(tag, attrs, start):
+    if start:
+        attr_str = ""
+        for k in attrs:
+            attr_str += (' %s="%s"' % (k, attrs[k]))
+        return "<%s%s>" % (tag, attr_str)
+    else:
+        return "</%s>" % tag
+
 def dumb_property_dict(style):
     """returns a hash of css attributes"""
     return dict([(x.strip(), y.strip()) for x, y in [z.split(':', 1) for z in style.split(';') if ':' in z]]);
@@ -215,6 +224,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         self.quiet = 0
         self.ignore = False
+        self.verbatim = None
         self.p_p = 0  # number of newline character to print before next output
         self.outcount = 0
         self.start = 1
@@ -401,6 +411,19 @@ class HTML2Text(HTMLParser.HTMLParser):
                 if self.tag_stack:
                     parent_style = self.tag_stack[-1][2]
 
+        if self.verbatim:
+            if tag == self.verbatim[0]:
+                if start:
+                    self.verbatim[1] += 1
+                else:
+                    self.verbatim[1] -= 1
+            if self.verbatim[1] <= 0:
+                self.verbatim = None
+                self.out('\n'+tag_str(tag, attrs, start)+'\n')
+            else:
+                self.out(tag_str(tag, attrs, start))
+            return
+
         if hn(tag):
             self.p()
             if start:
@@ -447,7 +470,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag in ['em', 'i', 'u'] and not self.ignore_emphasis: self.o(self.emphasis_mark)
         if tag in ['strong', 'b'] and not self.ignore_emphasis: self.o(self.strong_mark)
-        if tag in ['del', 'strike', 's']:
+        if tag in ['del', 'strike', 's', 'kbd']:
             if start:
                 self.o("<"+tag+">")
             else:
@@ -571,8 +594,12 @@ class HTML2Text(HTMLParser.HTMLParser):
             else:
                 self.ignore = False
 
-        if tag in ["table", "tr"] and start: self.p()
-        if tag == 'td': self.pbr()
+        # if tag in ["table", "tr"] and start: self.p()
+        # if tag == 'td': self.pbr()
+        if tag == "table" and start:
+            self.out('\n'+tag_str(tag, attrs, start)+'\n')
+            self.verbatim = [tag, 1]
+            return
 
         if tag == "pre":
             if start:
@@ -690,6 +717,10 @@ class HTML2Text(HTMLParser.HTMLParser):
         if r'\/script>' in data: self.quiet -= 1
 
         if self.ignore:
+            return
+
+        if self.verbatim:
+            self.out(data)
             return
 
         if self.style:
