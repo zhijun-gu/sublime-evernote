@@ -54,6 +54,8 @@ import sublime_plugin
 import webbrowser
 import markdown2
 
+from base64 import b64encode, b64decode
+
 ST3 = int(sublime.version()) >= 3000
 
 
@@ -64,6 +66,8 @@ def LOG(*args):
 USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
+SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
+SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
 if PY2:
     def enc(txt):
@@ -107,6 +111,12 @@ def populate_note(note, view, notebooks=[]):
         content = '<?xml version="1.0" encoding="UTF-8"?>'
         content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
         content += '<en-note>'
+        hidden = ('\n%s%s%s\n' %
+                    (SUBLIME_EVERNOTE_COMMENT_BEG,
+                     b64encode(contents.encode('utf8')).decode('utf8'),
+                     SUBLIME_EVERNOTE_COMMENT_END))
+        LOG(hidden)
+        content += hidden
         content += body
         content += '</en-note>'
         note.title = meta.get("title", note.title)
@@ -299,6 +309,7 @@ class SendToEvernoteCommand(EvernoteDoText):
             LOG(note.title)
             LOG(note.tagNames)
             LOG(note.notebookGuid)
+            LOG(note.content)
 
             try:
                 sublime.status_message("Posting note, please wait...")
@@ -337,9 +348,10 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 
         populate_note(note, self.view, self.get_notebooks())
 
+        sublime.status_message("Updating note, please wait...")
+
         def __update_note():
             try:
-                sublime.status_message("Updating note, please wait...")
                 if PY2:
                     cnote = noteStore.updateNote(note)
                 else:
@@ -392,20 +404,30 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 newview = self.window.new_file()
                 newview.set_scratch(True)
                 newview.set_name(note.title)
+                LOG(note.content)
                 if convert:
-                    try:
-                        mdtxt = html2text(note.content)
-                        LOG("Conversion ok")
-                    except:
-                        mdtxt = note.content
-                        LOG("Conversion failed")
-                        LOG(mdtxt)
                     tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
                     meta = "---\n"
                     meta += "title: %s\n" % (note.title or "Untitled")
                     meta += "tags: %s\n" % (json.dumps(tags))
                     meta += "notebook: %s\n" % notebooks[notebook].name
                     meta += "---\n\n"
+                    try:
+                        builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
+                        if builtin >= 0:
+                            builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
+                            bmdtxt = note.content[builtin+len(SUBLIME_EVERNOTE_COMMENT_BEG):builtin_end]
+                            LOG(bmdtxt)
+                            mdtxt = b64decode(bmdtxt.encode('utf8')).decode('utf8')
+                            meta = ""
+                            LOG("Loaded from built-in comment")
+                        else:
+                            mdtxt = html2text(note.content)
+                            LOG("Conversion ok")
+                    except Exception as e:
+                        mdtxt = note.content
+                        mdtxt = html2text(note.content)
+                        LOG("Conversion failed", e)
                     newview.settings().set("$evernote", True)
                     newview.settings().set("$evernote_guid", note.guid)
                     newview.settings().set("$evernote_title", note.title)
