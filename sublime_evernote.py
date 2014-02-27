@@ -74,7 +74,7 @@ else:
 
 MD_EXTRAS = {
     'footnotes'          : None,
-    'fenced-code-blocks' : None,
+    'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "github"},
     'cuddled-lists'      : None,
     # 'code-friendly'      : None, # Make this optional from settings?
     'metadata'           : None,
