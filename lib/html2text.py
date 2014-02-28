@@ -3,7 +3,7 @@
 __version__ = "3.200.3"
 __author__ = "Aaron Swartz (me@aaronsw.com)"
 __copyright__ = "(C) 2004-2008 Aaron Swartz. GNU GPL 3."
-__contributors__ = ["Martin 'Joey' Schulze", "Ricardo Reyes", "Kevin Jay North"]
+__contributors__ = ["Martin 'Joey' Schulze", "Ricardo Reyes", "Kevin Jay North", "Emanuele D'Osualdo"]
 
 # TODO:
 #   Support decoded entities with unifiable.
@@ -111,7 +111,7 @@ def tag_str(tag, attrs, start):
         attr_str = ""
         for k in attrs:
             attr_str += (' %s="%s"' % (k, attrs[k]))
-        return "<%s%s>" % (tag, attr_str)
+        return "<%s%s%s>" % (tag, attr_str, '/' if start == 2 else '')
     else:
         return "</%s>" % tag
 
@@ -291,6 +291,10 @@ class HTML2Text(HTMLParser.HTMLParser):
 
     def handle_entityref(self, c):
         self.o(self.entityref(c), 1)
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_tag(tag, attrs, 2)
+        self.handle_tag(tag, None, 0)
 
     def handle_starttag(self, tag, attrs):
         self.handle_tag(tag, attrs, 1)
@@ -598,6 +602,24 @@ class HTML2Text(HTMLParser.HTMLParser):
         # if tag == 'td': self.pbr()
         if tag == "table" and start:
             self.out('\n'+tag_str(tag, attrs, start)+'\n')
+            self.verbatim = [tag, 1]
+            return
+
+        if tag == "en-todo":
+            if start:
+                if attrs.get("checked", False):
+                    self.out("[x] ")
+                else:
+                    self.out("[ ] ")
+            return
+
+        if tag == "en-media":
+            if start:
+                self.out(tag_str(tag, attrs, 2))
+            return
+
+        if tag == "en-crypt":
+            self.out(tag_str(tag, attrs, start))
             self.verbatim = [tag, 1]
             return
 

@@ -1426,7 +1426,14 @@ class Markdown(object):
     def _list_item_sub(self, match):
         item = match.group(4)
         leading_line = match.group(1)
-        leading_space = match.group(2)
+        # leading_space = match.group(2)
+        marker = match.group(3)
+        start_tag = ""
+        if item[0:4] in ["[ ] ", "[x] "]:
+            start_tag = '%s><en-todo%s/' % \
+                (' style="list-style-type: none;"' if marker in "+-*" else '',
+                 ' checked="true"' if item[1] == 'x' else '')
+            item = item[4:]
         if leading_line or "\n\n" in item or self._last_li_endswith_two_eols:
             item = self._run_block_gamut(self._outdent(item))
         else:
@@ -1436,7 +1443,7 @@ class Markdown(object):
                 item = item[:-1]
             item = self._run_span_gamut(item)
         self._last_li_endswith_two_eols = (len(match.group(5)) == 2)
-        return "<li>%s</li>\n" % item
+        return "<li%s>%s</li>\n" % (start_tag, item)
 
     def _process_list_items(self, list_str):
         # Process the contents of a single ordered or unordered list,
