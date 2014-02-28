@@ -607,10 +607,13 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag == "en-todo":
             if start:
-                if attrs.get("checked", False):
-                    self.out("[x] ")
+                if self.list:
+                    if attrs.get("checked", False):
+                        self.out("[x] ")
+                    else:
+                        self.out("[ ] ")
                 else:
-                    self.out("[ ] ")
+                    self.out(tag_str(tag, attrs, 2))
             return
 
         if tag == "en-media":
