@@ -609,11 +609,11 @@ class HTML2Text(HTMLParser.HTMLParser):
             if start:
                 if self.list:
                     if attrs.get("checked", False):
-                        self.out("[x] ")
+                        self.o("[x] ")
                     else:
-                        self.out("[ ] ")
+                        self.o("[ ] ")
                 else:
-                    self.out(tag_str(tag, attrs, 2))
+                    self.o(tag_str(tag, attrs, 2))
             return
 
         if tag == "en-media":
