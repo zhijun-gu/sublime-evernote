@@ -8,5 +8,6 @@
         "sup": "color:#6D6D6D;font-size:1ex"
     },
     "code_highlighting_style": "github",
-    "code_friendly": false
+    "code_friendly": false,
+    "notes_order": "updated"
 }

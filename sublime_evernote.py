@@ -391,10 +391,15 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             if notebook < 0:
                 return
             nid = notebooks[notebook].guid
+            order = self.settings.get("notes_order", "default")
+            order = order.upper()
+            order = Types.NoteSortOrder._NAMES_TO_VALUES.get(order)  # None = default
+            ascending = self.settings.get("notes_order_ascending", False)
             notes = noteStore.findNotesMetadata(
-                self.token(), NoteStore.NoteFilter(notebookGuid=nid, order=Types.NoteSortOrder.UPDATED),
-                0,
-                100,
+                self.token(),
+                NoteStore.NoteFilter(notebookGuid=nid, order=order),
+                ascending,
+                self.settings.get("max_notes", 100),
                 NoteStore.NotesMetadataResultSpec(includeTitle=True)).notes
 
             def on_note(i):
@@ -445,6 +450,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 sublime.status_message("Note \"%s\" opened!" % note.title)
 
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
+
         self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
 
 
