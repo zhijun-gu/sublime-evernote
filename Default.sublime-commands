@@ -1,13 +1,13 @@
 [
-    { "command": "send_to_evernote", "caption": "Evernote: Send to Evernote" },    
-    { "command": "open_evernote_note", "caption": "Evernote: Open Evernote Note" },    
+    { "command": "send_to_evernote", "caption": "Evernote: Send to Evernote" },
+    { "command": "open_evernote_note", "caption": "Evernote: Open Evernote Note" },
     {
         "caption": "Evernote: Settings",
         "command": "open_file", "args":
         {
             "file": "${packages}/User/SublimeEvernote.sublime-settings"
         }
-    }, 
-    { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },    
+    },
+    { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },
     { "command": "reconfig_evernote", "caption": "Evernote: Reconfigure" }
 ]
