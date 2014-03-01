@@ -330,7 +330,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                 if e.errorCode == 9:
                     self.connect(self.do_send, **args)
                 else:
-                    if sublime.ok_cancel_dialog('Error %s! retry?' % e):
+                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % e.parameter):
                         self.connect(self.do_send, **args)
             except Exception as e:
                 sublime.error_message('Error %s' % e)
@@ -368,7 +368,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 if e.errorCode == 9:
                     self.connect(self.__update_note)
                 else:
-                    if sublime.ok_cancel_dialog('Error %s! retry?' % e):
+                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % e.parameter):
                         self.connect(self.__update_note)
             except Exception as e:
                 sublime.error_message('Error %s' % e)
