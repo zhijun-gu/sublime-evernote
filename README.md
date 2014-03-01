@@ -1,12 +1,9 @@
 Evernote for Sublime Text
 =========================
 
-[Sublime Text](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com)
+[Sublime Text](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com).
 
-This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote).
-It adds support for Sublime Text 3 (thanks to [timlockridge](https://github.com/timlockridge/SublimeEvernote)) and includes new features as open/update of notes from Sublime.
-
-**NB:** this plugin has only been tested in Sublime Text 3
+This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
 # Main Features
 
@@ -20,7 +17,7 @@ It adds support for Sublime Text 3 (thanks to [timlockridge](https://github.com/
 Clone this repository with
 
 ```sh
-$ git clone --recursive http://github.com/bordaigorl/sublime-evernote.git
+$ git clone http://github.com/bordaigorl/sublime-evernote.git
 ```
 
 in
@@ -39,6 +36,13 @@ When you first run this package from the command palette, it will launch a brows
 If you need to reconfigure the plugin go to `Preferences > Package Settings > Evernote` and select `Reconfigure Authorisation` or goto
 
 `Command Palette` > `Evernote: Reconfigure`
+
+
+> **PLEASE NOTE**
+> 
+> The authentication method makes use of the Developer Token which is unique to your account and grants read-write access to your Evernote.
+> This token will be saved in your user settings in the `Evernote.sublime-settings` so make sure you do not share this publicly! 
+
 
 ## Commands
 
@@ -83,13 +87,40 @@ When sending or updating the note, the plugin will extract this metadata and set
 
 The `tags` field can be an unquoted list or a json list such as `["my long tag", "tag2"]`.
 
+# Settings
+
+The `Evernote.sublime-settings` can be accessed from `Preferences > Package Settings > Evernote`.
+
+The two settings `token` and `noteStoreUrl` are set by the plugin in the [first use](#first-use).
+
+The following settings can be customised:
+
+* `inline_css`: a dictionary associating some HTML element names to inline CSS styles;
+  currently the only elements that can be styled in this way are:
+  `pre`, `code`, `h1`, `hr` and `sup`.
+  Additionally `footnotes` can be associated to some style for the `div` containing the footnotes at the end of the note.
+  The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed).
+  See [here](http://dev.evernote.com/doc/articles/enml.php) for details.
+* `code_highlighting_style`: a pygments style among
+  `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`,   `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
+* `code_friendly`: if `true` the `code-friendly` extra of markdown2 is enabled
+* `notes_order`: how to sort the notes in the panels; possible values:
+  `created`, `updated`, `relevance`, `update_sequence_number`, `title`.
+  Set the `notes_order_ascending` setting to `true` to reverse the selected order.  
+* `max_notes`: maximum number of notes in a panel; default is 100.
+
+
 # Acknowledgements
 
- * Original Plugin: [jamiesun](https://github.com/jamiesun/SublimeEvernote)
+ * Current maintainer and new features: @bordaigorl
+ * Original ST2 Plugin: [jamiesun](https://github.com/jamiesun/SublimeEvernote)
  * Port to ST3:
      - [rekotan](https://github.com/rekotan/SublimeEvernote)
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
- * Open/Update/Two way Metadata features:  [bordaigorl](https://github.com/bordaigorl/sublime-evernote)
+ * Other contributors: @mwcraig and @rayou.
+
+Libraries (some adapted to work with Evernote formats):
+
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
  * HTML2Markdown: [Aaron Swartz](https://github.com/aaronsw/html2text)
  * Evernote API: <https://github.com/evernote/evernote-sdk-python>
