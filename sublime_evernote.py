@@ -392,11 +392,10 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 return
             nid = notebooks[notebook].guid
             notes = noteStore.findNotesMetadata(
-                self.token(), NoteStore.NoteFilter(notebookGuid=nid),
+                self.token(), NoteStore.NoteFilter(notebookGuid=nid, order=Types.NoteSortOrder.UPDATED),
                 0,
                 100,
                 NoteStore.NotesMetadataResultSpec(includeTitle=True)).notes
-            notes.reverse()
 
             def on_note(i):
                 if i < 0:
