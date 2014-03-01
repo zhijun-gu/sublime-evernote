@@ -53,6 +53,7 @@ import sublime
 import sublime_plugin
 import webbrowser
 import markdown2
+import html2text
 
 from base64 import b64encode, b64decode
 
@@ -76,23 +77,6 @@ else:
     def enc(txt):
         return txt
 
-MD_EXTRAS = {
-    'footnotes'          : None,
-    'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "github"},
-    'cuddled-lists'      : None,
-    # 'code-friendly'      : None, # Make this optional from settings?
-    'metadata'           : None,
-    # This should be loaded from settings!
-    'inline-css'         : {
-        'pre': "color: #000000; font-family: monospace,monospace; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; background-color: #f8f8f8; border: 1px solid #cccccc; border-radius: 3px; overflow: auto; padding: 6px 10px; margin-bottom: 10px;",
-        'code': "color: black; font-family: monospace,monospace; font-size: 0.9em;",
-        'h1': "margin-bottom: 1em; margin-top: 1.2em;",
-        'footnotes': "border-top: 1px solid #9AB39B; font-size: 80%;",
-        'hr': "color:#9AB39B;background-color:#9AB39B;height:1px;border:none;",
-        'sup': "color:#6D6D6D;font-size:1ex"
-    }
-}
-
 
 def extractTags(tags):
     try:
@@ -105,7 +89,7 @@ def extractTags(tags):
 def populate_note(note, view, notebooks=[]):
     if view:
         contents = view.substr(sublime.Region(0, view.size()))
-        body = markdown2.markdown(contents, extras=MD_EXTRAS)
+        body = markdown2.markdown(contents, extras=EvernoteDo.MD_EXTRAS)
         meta = body.metadata or {}
         body = enc(body)
         content = '<?xml version="1.0" encoding="UTF-8"?>'
@@ -115,9 +99,9 @@ def populate_note(note, view, notebooks=[]):
                     (SUBLIME_EVERNOTE_COMMENT_BEG,
                      b64encode(contents.encode('utf8')).decode('utf8'),
                      SUBLIME_EVERNOTE_COMMENT_END))
-        LOG(hidden)
         content += hidden
         content += body
+        LOG(body)
         content += '</en-note>'
         note.title = meta.get("title", note.title)
         tags = meta.get("tags", note.tagNames)
@@ -152,8 +136,28 @@ class EvernoteDo():
     _noteStore = None
     _notebooks = None
 
+    MD_EXTRAS = {
+        'footnotes'          : None,
+        'cuddled-lists'      : None,
+        'metadata'           : None,
+        'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "default"}
+    }
+
+
     def token(self):
         return self.settings.get("token")
+
+    def load_settings(self):
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        pygm_style = self.settings.get('code_highlighting_style')
+        if pygm_style:
+            EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
+        if self.settings.get("code_friendly"):
+            EvernoteDo.MD_EXTRAS['code-friendly'] = None
+        css = self.settings.get("inline_css")
+        LOG(css)
+        if css is not None:
+            EvernoteDo.MD_EXTRAS['inline-css'] = css
 
     def connect(self, callback, **kwargs):
         sublime.status_message("initializing..., please wait...")
@@ -233,7 +237,7 @@ class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 
     def run(self, edit, **kwargs):
         self.window = sublime.active_window()
-        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        self.load_settings()
         if not self.token():
             self.connect(lambda **kw: self.do_run(edit, **kw), **kwargs)
         else:
@@ -244,7 +248,7 @@ class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
         # self.window = sublime.active_window()
-        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        self.load_settings()
         if not self.token():
             self.connect(self.do_run, **kwargs)
         else:
@@ -380,7 +384,6 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
     def do_run(self, convert=True):
-        from html2text import html2text
         noteStore = self.get_note_store()
         notebooks = self.get_notebooks()
 
@@ -417,7 +420,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                         try:
                             builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
                             bmdtxt = note.content[builtin+len(SUBLIME_EVERNOTE_COMMENT_BEG):builtin_end]
-                            LOG(bmdtxt)
                             mdtxt = b64decode(bmdtxt.encode('utf8')).decode('utf8')
                             meta = ""
                             LOG("Loaded from built-in comment")
@@ -426,7 +428,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                             LOG("Loading from built-in comment failed", e)
                     if builtin < 0 or mdtxt == "":
                         try:
-                            mdtxt = html2text(note.content)
+                            mdtxt = html2text.html2text(note.content)
                             LOG("Conversion ok")
                         except Exception as e:
                             mdtxt = note.content

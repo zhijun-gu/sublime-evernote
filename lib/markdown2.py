@@ -1806,7 +1806,7 @@ class Markdown(object):
     def _add_footnotes(self, text):
         if self.footnotes:
             footer = [
-                '<div%s>' % (self._html_class_str_from_tag("footnotes") or 'class="footnotes"'),
+                '<div%s>' % self._html_class_str_from_tag("footnotes"),
                 # suppressing hr because it complicates parsing in html2text
                 # ('<hr%s' % self._html_class_str_from_tag("hr")) + self.empty_element_suffix,
                 # setting the title (id is not available in Evernote) for easy detection in html2text
