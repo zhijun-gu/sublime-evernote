@@ -3,51 +3,23 @@ import sys
 import os
 import json
 
-# The differences in what is required between Sublime Text 2 and Sublime Text 3 should
-# be clear enough from the "if sys.version_info" blocks in the code. Specifically
-#   -- there are some syntax changes between Python 2 and 3
-#   -- Python 3 uses unicode strings by default, and some values had to be converted from bytes
-#   -- the Python 3 evernote API is invoked differently, and needs a username in order to
-#          build a noteStore URL.
-# Also, OAuth was not implemented, because the Python 3 that is built into Sublime Text 3 was
+# NOTE: OAuth was not implemented, because the Python 3 that is built into Sublime Text 3 was
 # built without SSL. So, among other things, this means no http.client.HTTPSRemoteConnection
-#
-# One gotcha -- the THttpClient.py file, included in the Evernote Python 3 SDK, includes
-# a call to .iteritems() on a dictionary on line 138. This is forbidden in python 3. I
-# fixed it by changing .iteritems() to .items() and submitted an Issue on GitHub, so
-# hopefully this will be fixed (10/02/2013)
-
-# Make sure that we have absolute path names for the libraries that we wat to import, and
-# import the correct version of the Evernote SDK, depending on whether we are using
-# SublimeText2/Python2 or SublimeText3/Python3
 
 package_file = os.path.normpath(os.path.abspath(__file__))
 package_path = os.path.dirname(package_file)
 lib_path = os.path.join(package_path, "lib")
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
-
-if PY2:
-    evernote_path = os.path.join(package_path, "lib", "evernote-sdk-python", "lib")
-else:
-    evernote_path = os.path.join(package_path, "lib", "evernote-sdk-python3", "lib")
-
 if lib_path not in sys.path:
     sys.path.append(lib_path)
-if evernote_path not in sys.path:
-    sys.path.append(evernote_path)
 
 import evernote.edam.type.ttypes as Types
 import evernote.edam.error.ttypes as Errors
 
-if PY2:
-    from evernote.api.client import EvernoteClient
-else:
-    import evernote.edam.userstore.UserStore as UserStore
-    import evernote.edam.notestore.NoteStore as NoteStore
-    import thrift.protocol.TBinaryProtocol as TBinaryProtocol
-    import thrift.transport.THttpClient as THttpClient
+# import evernote.edam.userstore.UserStore as UserStore
+import evernote.edam.notestore.NoteStore as NoteStore
+import thrift.protocol.TBinaryProtocol as TBinaryProtocol
+import thrift.transport.THttpClient as THttpClient
 
 import sublime
 import sublime_plugin
@@ -58,25 +30,16 @@ html2text.BODY_WIDTH = False
 
 from base64 import b64encode, b64decode
 
-ST3 = int(sublime.version()) >= 3000
-
-
-def LOG(*args):
-    # print ("Evernote: "+ ' '.join(str(a) for a in args))
-    pass
-
 USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-if PY2:
-    def enc(txt):
-        return txt.encode('utf-8')
-else:
-    def enc(txt):
-        return txt
+
+def LOG(*args):
+    # print ("Evernote: "+ ' '.join(str(a) for a in args))
+    pass
 
 
 def extractTags(tags):
@@ -92,7 +55,6 @@ def populate_note(note, view, notebooks=[]):
         contents = view.substr(sublime.Region(0, view.size()))
         body = markdown2.markdown(contents, extras=EvernoteDo.MD_EXTRAS)
         meta = body.metadata or {}
-        body = enc(body)
         content = '<?xml version="1.0" encoding="UTF-8"?>'
         content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
         content += '<en-note>'
@@ -118,18 +80,12 @@ def populate_note(note, view, notebooks=[]):
                     break
     return note
 
-if ST3:
-    def append_to_view(view, text):
-        view.run_command('append', {
-            'characters': text,
-        })
-        return view
-else:
-    def append_to_view(view, text):
-        new_edit = view.begin_edit()
-        view.insert(new_edit, view.size(), text)
-        view.end_edit(new_edit)
-        return view
+
+def append_to_view(view, text):
+    view.run_command('append', {
+        'characters': text,
+    })
+    return view
 
 
 class EvernoteDo():
@@ -185,7 +141,7 @@ class EvernoteDo():
 
         def on_token(token):
             noteStoreUrl = self.settings.get("noteStoreUrl")
-            if PY3 and (not noteStoreUrl):
+            if not noteStoreUrl:
                 noteStoreUrl = __derive_note_store_url(token)
             __connect(token, noteStoreUrl)
 
@@ -202,16 +158,13 @@ class EvernoteDo():
     def get_note_store(self):
         if EvernoteDo._noteStore:
             return EvernoteDo._noteStore
-        if PY2:
-            noteStore = EvernoteClient(token=self.token(), sandbox=False).get_note_store()
-        else:
-            noteStoreUrl = self.settings.get("noteStoreUrl")
-            LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
-            LOG("I've got this for token -->{0}<--".format(self.token()))
-            noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-            noteStoreHttpClient.setCustomHeaders(USER_AGENT)
-            noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
-            noteStore = NoteStore.Client(noteStoreProtocol)
+        noteStoreUrl = self.settings.get("noteStoreUrl")
+        LOG("I've got this for noteStoreUrl -->{0}<--".format(noteStoreUrl))
+        LOG("I've got this for token -->{0}<--".format(self.token()))
+        noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
+        noteStoreHttpClient.setCustomHeaders(USER_AGENT)
+        noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
+        noteStore = NoteStore.Client(noteStoreProtocol)
         EvernoteDo._noteStore = noteStore
         return noteStore
 
@@ -223,10 +176,7 @@ class EvernoteDo():
         try:
             noteStore = self.get_note_store()
             sublime.status_message("Fetching notebooks, please wait...")
-            if PY2:
-                notebooks = noteStore.listNotebooks()
-            else:
-                notebooks = noteStore.listNotebooks(self.token())
+            notebooks = noteStore.listNotebooks(self.token())
             sublime.status_message("Fetched all notebooks!")
         except Exception as e:
             sublime.error_message('Error getting notebooks: %s' % e)
@@ -288,7 +238,7 @@ class SendToEvernoteCommand(EvernoteDoText):
 
         def choose_tags(title=None):
             if title is not None:
-                note.title = enc(title)
+                note.title = title
             if note.tagNames is None:
                 self.window.show_input_panel("Tags (Optional):", default_tags, choose_notebook, None, on_cancel)
             else:
@@ -318,10 +268,7 @@ class SendToEvernoteCommand(EvernoteDoText):
 
             try:
                 sublime.status_message("Posting note, please wait...")
-                if PY2:
-                    cnote = noteStore.createNote(note)
-                else:
-                    cnote = noteStore.createNote(self.token(), note)
+                cnote = noteStore.createNote(self.token(), note)
                 sublime.status_message("Successfully posted note: guid:%s" % cnote.guid)
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
@@ -345,11 +292,8 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
         note = Types.Note()
         noteStore = self.get_note_store()
 
-        title = self.view.settings().get("$evernote_title")
-        guid = self.view.settings().get("$evernote_guid")
-
-        note.title = enc(title)
-        note.guid = enc(guid)
+        note.title = self.view.settings().get("$evernote_title")
+        note.guid = self.view.settings().get("$evernote_guid")
 
         populate_note(note, self.view, self.get_notebooks())
 
@@ -357,10 +301,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 
         def __update_note():
             try:
-                if PY2:
-                    cnote = noteStore.updateNote(note)
-                else:
-                    cnote = noteStore.updateNote(self.token(), note)
+                cnote = noteStore.updateNote(self.token(), note)
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
