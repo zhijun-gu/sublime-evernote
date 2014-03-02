@@ -446,7 +446,11 @@ class HTML2Text(HTMLParser.HTMLParser):
             else:
                 self.p()
 
-        if tag == "br" and start: self.o("  \n")
+        if tag == "br" and start:
+            if 'clear' in attrs:  # Evernote
+                self.pbr()
+            else:
+                self.o("  \n")
 
         if tag == "hr" and start:
             self.p()
@@ -486,11 +490,11 @@ class HTML2Text(HTMLParser.HTMLParser):
                 self.handle_emphasis(start, tag_style, parent_style)
 
         if tag in ["code", "tt"] and not self.pre: self.o('`') #TODO: `` `this` ``
-        if tag == "abbr":
+        if tag == "abbr" or tag == "acronym":  # Should get rid of this: not supported by markdown2
             if start:
                 self.abbr_title = None
                 self.abbr_data = ''
-                if has_key(attrs, 'title'):
+                if 'title' in attrs:
                     self.abbr_title = attrs['title']
             else:
                 if self.abbr_title != None:
