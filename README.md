@@ -97,7 +97,7 @@ The following settings can be customised:
 
 * `inline_css`: a dictionary associating some HTML element names to inline CSS styles;
   currently the only elements that can be styled in this way are:
-  `pre`, `code`, `h1`, `hr` and `sup`.
+  `pre`, `code`, `h1`, `hr`, `blockquote` and `sup`.
   Additionally `footnotes` can be associated to some style for the `div` containing the footnotes at the end of the note.
   The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed).
   See [here](http://dev.evernote.com/doc/articles/enml.php) for details.

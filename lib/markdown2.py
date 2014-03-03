@@ -567,26 +567,29 @@ class Markdown(object):
         re.X | re.M)
 
     _html_markdown_attr_re = re.compile(
-        r'''\s+markdown=("1"|'1')''')
+        r'''\s+markdown\s*=\s*("[0-9a-zA-Z]*"|'[0-9a-zA-Z]*')''')
     def _hash_html_block_sub(self, match, raw=False):
         html = match.group(1)
         if raw and self.safe_mode:
             html = self._sanitize_html(html)
-        elif 'markdown-in-html' in self.extras and 'markdown=' in html:
+        elif 'markdown-in-html' in self.extras and 'markdown' in html:
             first_line = html.split('\n', 1)[0]
             m = self._html_markdown_attr_re.search(first_line)
             if m:
-                lines = html.split('\n')
-                middle = '\n'.join(lines[1:-1])
-                last_line = lines[-1]
-                first_line = first_line[:m.start()] + first_line[m.end():]
-                f_key = _hash_text(first_line)
-                self.html_blocks[f_key] = first_line
-                l_key = _hash_text(last_line)
-                self.html_blocks[l_key] = last_line
-                return ''.join(["\n\n", f_key,
-                    "\n\n", middle, "\n\n",
-                    l_key, "\n\n"])
+                if m.group(1)[1:-1] == "1":
+                    lines = html.split('\n')
+                    middle = '\n'.join(lines[1:-1])
+                    last_line = lines[-1]
+                    first_line = first_line[:m.start()] + first_line[m.end():]
+                    f_key = _hash_text(first_line)
+                    self.html_blocks[f_key] = first_line
+                    l_key = _hash_text(last_line)
+                    self.html_blocks[l_key] = last_line
+                    return ''.join(["\n\n", f_key,
+                        "\n\n", middle, "\n\n",
+                        l_key, "\n\n"])
+                else:
+                    html = html[:m.start()] + html[m.end():]
         key = _hash_text(html)
         self.html_blocks[key] = html
         return "\n\n" + key + "\n\n"
@@ -1758,8 +1761,9 @@ class Markdown(object):
         bq = re.sub('(?m)^', '  ', bq)
         # These leading spaces screw with <pre> content, so we need to fix that:
         bq = self._html_pre_block_re.sub(self._dedent_two_spaces_sub, bq)
+        bqstyle = self._html_class_str_from_tag("blockquote")
 
-        return "<blockquote>\n%s\n</blockquote>\n\n" % bq
+        return "<blockquote%s>\n%s\n</blockquote>\n\n" % (bqstyle, bq)
 
     def _do_block_quotes(self, text):
         if '>' not in text:
