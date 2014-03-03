@@ -26,7 +26,6 @@ import sublime_plugin
 import webbrowser
 import markdown2
 import html2text
-html2text.BODY_WIDTH = False
 
 from base64 import b64encode, b64decode
 
@@ -97,6 +96,7 @@ class EvernoteDo():
         'footnotes'          : None,
         'cuddled-lists'      : None,
         'metadata'           : None,
+        'markdown-in-html'   : None,
         'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "default"}
     }
 

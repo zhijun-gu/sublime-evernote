@@ -48,7 +48,8 @@ ESCAPE_SNOB = 0
 LINKS_EACH_PARAGRAPH = 0
 
 # Wrap long lines at position. 0 for no wrapping. (Requires Python 2.3.)
-BODY_WIDTH = 78
+# BODY_WIDTH = 78
+BODY_WIDTH = 0
 
 # Don't show internal links (href="#local-anchor") -- corresponding link targets
 # won't be visible in the plain text file anyway.
@@ -225,6 +226,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.quiet = 0
         self.ignore = False
         self.verbatim = None
+        self.block_stack = []
         self.p_p = 0  # number of newline character to print before next output
         self.outcount = 0
         self.start = 1
@@ -294,7 +296,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
     def handle_startendtag(self, tag, attrs):
         self.handle_tag(tag, attrs, 2)
-        self.handle_tag(tag, None, 0)
+        # self.handle_tag(tag, None, 0)
 
     def handle_starttag(self, tag, attrs):
         self.handle_tag(tag, attrs, 1)
@@ -444,6 +446,15 @@ class HTML2Text(HTMLParser.HTMLParser):
                 else:
                     self.soft_br()
             else:
+                if start == 1:
+                    if attrs and attrs.get("title") != "footnotes":
+                        self.block_stack.append(True)
+                        self.o(tag_str(tag+' markdown="1"', attrs, start))
+                    else:
+                        self.block_stack.append(False)
+                elif start == 0:
+                    if self.block_stack.pop():
+                        self.o('</%s>' % tag)
                 self.p()
 
         if tag == "br" and start:
