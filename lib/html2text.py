@@ -439,7 +439,7 @@ class HTML2Text(HTMLParser.HTMLParser):
                 self.inheader = False
                 return # prevent redundant emphasis marks on headers
 
-        if tag in ['p', 'div']:
+        if tag == 'div':
             if self.google_doc:
                 if start and google_has_height(tag_style):
                     self.p()
@@ -455,6 +455,15 @@ class HTML2Text(HTMLParser.HTMLParser):
                 elif start == 0:
                     if self.block_stack.pop():
                         self.o('</%s>' % tag)
+                self.p()
+
+        if tag == 'p':
+            if self.google_doc:
+                if start and google_has_height(tag_style):
+                    self.p()
+                else:
+                    self.soft_br()
+            else:
                 self.p()
 
         if tag == "br" and start:
