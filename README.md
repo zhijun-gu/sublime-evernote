@@ -95,6 +95,7 @@ The two settings `token` and `noteStoreUrl` are set by the plugin in the [first 
 
 The following settings can be customised:
 
+* `md_syntax`: a string pointing to a `tmLanguage` file which you want to associate with notes opened from Evernote.
 * `inline_css`: a dictionary associating some HTML element names to inline CSS styles;
   currently the only elements that can be styled in this way are:
   `pre`, `code`, `h1`, `hr`, `blockquote` and `sup`.
@@ -112,12 +113,17 @@ The following settings can be customised:
 
 # Acknowledgements
 
- * Current maintainer and new features: @bordaigorl
- * Original ST2 Plugin: [jamiesun](https://github.com/jamiesun/SublimeEvernote)
+ * Current maintainer and new features:
+   [bordaigorl](https://github.com/bordaigorl)
+ * Original ST2 Plugin:
+   [jamiesun](https://github.com/jamiesun/SublimeEvernote)
  * Port to ST3:
      - [rekotan](https://github.com/rekotan/SublimeEvernote)
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
- * Other contributors: @mwcraig and @rayou.
+ * Other contributors:
+   [mwcraig](https://github.com/mwcraig),
+   [rayou](https://github.com/rayou) and
+   [dimfeld](https://github.com/dimfeld).
 
 Libraries (some adapted to work with Evernote formats):
 
