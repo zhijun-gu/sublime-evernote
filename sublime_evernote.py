@@ -87,6 +87,14 @@ def append_to_view(view, text):
     return view
 
 
+def find_syntax(lang, default=None):
+    res = sublime.find_resources("%s.*Language" % lang)
+    if res:
+        return res[-1]
+    else:
+        return (default or ("Packages/%s/%s.tmLanguage" % lang))
+
+
 class EvernoteDo():
 
     _noteStore = None
@@ -115,6 +123,10 @@ class EvernoteDo():
         LOG(css)
         if css is not None:
             EvernoteDo.MD_EXTRAS['inline-css'] = css
+        self.md_syntax = self.settings.get("md_syntax")
+        if not self.md_syntax:
+            self.md_syntax = find_syntax("Markdown")
+
 
     def connect(self, callback, **kwargs):
         sublime.status_message("initializing..., please wait...")
@@ -383,9 +395,9 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     newview.settings().set("$evernote_guid", note.guid)
                     newview.settings().set("$evernote_title", note.title)
                     append_to_view(newview, meta+mdtxt)
-                    syntax = newview.settings().get("md_syntax", "Packages/Markdown/Markdown.tmLanguage")
+                    syntax = self.md_syntax
                 else:
-                    syntax = "Packages/XML/XML.tmLanguage"
+                    syntax = find_syntax("XML")
                     append_to_view(newview, note.content)
                 newview.set_syntax_file(syntax)
                 newview.show(0)
