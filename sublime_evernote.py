@@ -35,10 +35,14 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
+DEBUG = 1
 
-def LOG(*args):
-    # print ("Evernote: "+ ' '.join(str(a) for a in args))
-    pass
+if DEBUG:
+    def LOG(*args):
+        print("Evernote:", *args)
+else:
+    def LOG(*args):
+        pass
 
 
 def extractTags(tags):
@@ -205,8 +209,15 @@ class EvernoteDo():
 class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 
     def run(self, edit, **kwargs):
-        self.window = sublime.active_window()
+        if DEBUG:
+            from imp import reload
+            reload(markdown2)
+            reload(html2text)
+
+        self.window = self.view.window()
+
         self.load_settings()
+
         if not self.token():
             self.connect(lambda **kw: self.do_run(edit, **kw), **kwargs)
         else:
@@ -216,8 +227,13 @@ class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
 
     def run(self, **kwargs):
-        # self.window = sublime.active_window()
+        if DEBUG:
+            from imp import reload
+            reload(markdown2)
+            reload(html2text)
+
         self.load_settings()
+
         if not self.token():
             self.connect(self.do_run, **kwargs)
         else:
