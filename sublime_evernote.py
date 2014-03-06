@@ -108,9 +108,15 @@ class EvernoteDo():
         'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "default"}
     }
 
+    TAG_CACHE = {}
 
     def token(self):
         return self.settings.get("token")
+
+    def tag_from_guid(self, guid):
+        if guid not in EvernoteDo.TAG_CACHE:
+            EvernoteDo.TAG_CACHE[guid] = self.get_note_store().getTag(self.token(), guid).name
+        return EvernoteDo.TAG_CACHE[guid]
 
     def load_settings(self):
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
@@ -367,7 +373,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 newview.set_name(note.title)
                 LOG(note.content)
                 if convert:
-                    tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
+                    # tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
+                    tags = [self.tag_from_guid(guid) for guid in (note.tagGuids or [])]
                     meta = "---\n"
                     meta += "title: %s\n" % (note.title or "Untitled")
                     meta += "tags: %s\n" % (json.dumps(tags))
