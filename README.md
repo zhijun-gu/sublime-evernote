@@ -46,6 +46,15 @@ If you need to reconfigure the plugin go to `Preferences > Package Settings > Ev
 
 ## Commands
 
+The plugin does not install keymaps, if you wish you may add a variation of the following to your user keymaps:
+
+```
+{ "keys": ["super+e"], "command": "show_overlay", "args": {"overlay": "command_palette", "text": "Evernote: "} },
+{ "keys": ["ctrl+e", "ctrl+s"], "command": "send_to_evernote" },
+{ "keys": ["ctrl+e", "ctrl+o"], "command": "open_evernote_note" },
+{ "keys": ["ctrl+e", "ctrl+u"], "command": "save_evernote_note" },
+```
+
 ### Send to Evernote
 
 `Command Palette` > `Evernote: Send to Evernote`
