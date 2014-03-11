@@ -118,6 +118,7 @@ The following settings can be customised:
   `created`, `updated`, `relevance`, `update_sequence_number`, `title`.
   Set the `notes_order_ascending` setting to `true` to reverse the selected order.  
 * `max_notes`: maximum number of notes in a panel; default is 100.
+* `update_on_save`: when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false. 
 
 
 # Acknowledgements

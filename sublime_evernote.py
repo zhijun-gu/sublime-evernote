@@ -440,3 +440,12 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
         EvernoteDo._noteStore = None
         EvernoteDo._notebooks = None
         self.connect(lambda: True)
+
+
+class EvernoteListener(sublime_plugin.EventListener):
+
+    settings = sublime.load_settings(EVERNOTE_SETTINGS)
+
+    def on_post_save(self, view):
+        if self.settings.get('update_on_save'):
+            view.run_command("save_evernote_note")
