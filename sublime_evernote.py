@@ -137,9 +137,11 @@ class EvernoteDo():
         if not self.md_syntax:
             self.md_syntax = find_syntax("Markdown")
 
+    def message(self, msg):
+        sublime.status_message(msg)
 
     def connect(self, callback, **kwargs):
-        sublime.status_message("initializing..., please wait...")
+        self.message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
             LOG("token param {0}".format(token))
@@ -197,9 +199,9 @@ class EvernoteDo():
         notebooks = None
         try:
             noteStore = self.get_note_store()
-            sublime.status_message("Fetching notebooks, please wait...")
+            self.message("Fetching notebooks, please wait...")
             notebooks = noteStore.listNotebooks(self.token())
-            sublime.status_message("Fetched all notebooks!")
+            self.message("Fetched all notebooks!")
         except Exception as e:
             sublime.error_message('Error getting notebooks: %s' % e)
         EvernoteDo._notebooks = notebooks
@@ -207,6 +209,11 @@ class EvernoteDo():
 
 
 class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
+
+    def message(self, msg, timeout=5000):
+        self.view.set_status("Evernote", msg)
+        if timeout:
+            sublime.set_timeout(lambda: self.view.erase_status("Evernote"), timeout)
 
     def run(self, edit, **kwargs):
         if DEBUG:
@@ -262,7 +269,7 @@ class SendToEvernoteCommand(EvernoteDoText):
         populate_note(note, self.view, notebooks)
 
         def on_cancel():
-            sublime.status_message("Note not sent.")
+            self.message("Note not sent.")
 
         def choose_title():
             if not note.title:
@@ -301,9 +308,9 @@ class SendToEvernoteCommand(EvernoteDoText):
             LOG(note.content)
 
             try:
-                sublime.status_message("Posting note, please wait...")
+                self.message("Posting note, please wait...")
                 cnote = noteStore.createNote(self.token(), note)
-                sublime.status_message("Successfully posted note: guid:%s" % cnote.guid)
+                self.message("Successfully posted note: guid:%s" % cnote.guid)
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
@@ -331,7 +338,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 
         populate_note(note, self.view, self.get_notebooks())
 
-        sublime.status_message("Updating note, please wait...")
+        self.message("Updating note, please wait...")
 
         def __update_note():
             try:
@@ -339,7 +346,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
-                sublime.status_message("Successfully updated note: guid:%s" % cnote.guid)
+                self.message("Successfully updated note: guid:%s" % cnote.guid)
             except Errors.EDAMUserException as e:
                 if e.errorCode == 9:
                     self.connect(self.__update_note)
@@ -381,7 +388,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             def on_note(i):
                 if i < 0:
                     return
-                sublime.status_message("Retrieving note \"%s\"..." % notes[i].title)
+                self.message("Retrieving note \"%s\"..." % notes[i].title)
                 # TODO: api v2
                 note = noteStore.getNote(self.token(), notes[i].guid, True, False, False, False)
                 newview = self.window.new_file()
@@ -424,7 +431,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     append_to_view(newview, note.content)
                 newview.set_syntax_file(syntax)
                 newview.show(0)
-                sublime.status_message("Note \"%s\" opened!" % note.title)
+                self.message("Note \"%s\" opened!" % note.title)
 
             sublime.set_timeout(lambda: self.window.show_quick_panel([note.title for note in notes], on_note), 0)
 
