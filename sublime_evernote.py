@@ -459,3 +459,13 @@ class EvernoteListener(sublime_plugin.EventListener):
     def on_post_save(self, view):
         if self.settings.get('update_on_save'):
             view.run_command("save_evernote_note")
+
+    def on_query_context(self, view, key, operator, operand, match_all):
+        if key != "evernote_note":
+            return None
+
+        res = view.settings().get("$evernote", False)
+        if (operator == sublime.OP_NOT_EQUAL) ^ (not operand):
+            res = not res
+
+        return res

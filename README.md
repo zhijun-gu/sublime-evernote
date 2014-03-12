@@ -55,6 +55,10 @@ The plugin does not install keymaps, if you wish you may add a variation of the 
 { "keys": ["ctrl+e", "ctrl+u"], "command": "save_evernote_note" },
 ```
 
+You can also restrict your bindings to views showing Evernote notes by adding
+
+    "context": [{"key": "evernote_note"}]
+
 ### Send to Evernote
 
 `Command Palette` > `Evernote: Send to Evernote`
