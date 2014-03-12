@@ -3,6 +3,9 @@ import sys
 import os
 import json
 
+if sys.version_info < (3, 3):
+    raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
+
 # NOTE: OAuth was not implemented, because the Python 3 that is built into Sublime Text 3 was
 # built without SSL. So, among other things, this means no http.client.HTTPSRemoteConnection
 
