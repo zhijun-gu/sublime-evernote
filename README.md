@@ -14,6 +14,8 @@ To start using it install it from Package Control and type "Evernote" on the Com
  * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
  * **Full two-way metadata support**: you can set and change the note's title, notebook and tag just by providing a YAML metadata header in your markdown source.
 
+For more details about the plugin see the [wiki].
+
 # Installation
 
 Clone this repository with
@@ -80,11 +82,14 @@ This command only handles the main contents of the note and ignores the attachme
 
 `Command Palette` > `Evernote: Update Evernote Note`
 
-or `ctrl+s` on views displaying an Evernote note.
-
 When the current view is associated with an Evernote note (maybe because you just sent it to Evernote or because it is an opened note) you can update the note with this command.
 The [metadata](#metadata) will be updated according to the metadata block and attachments stored in the original Evernote note will be left alone.
 
+## Markdown
+
+You can use Markdown to write notes but there are some limitations due to Evernote's formats. For example, `class` and `id` are forbidden attributes in Evernote notes so the Markdown converter has been modified to never output them and raw HTML cannot contain them. If you write illegal content the plugin will display a dialog showing the reason why Evernote is complaining.
+
+Please see the [wiki documentation](https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown) for more details.
 
 ## Metadata
 
@@ -144,3 +149,4 @@ Libraries (some adapted to work with Evernote formats):
 
 
 [CONTRIBUTING]: <CONTRIBUTING.md>
+[wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
