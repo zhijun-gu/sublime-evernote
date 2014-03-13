@@ -5,6 +5,8 @@ Evernote for Sublime Text
 
 This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
+To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>). See [First Use](#first-use) for linking the plugin to your account.
+
 # Main Features
 
  * **Send a note to Evernote:** converts the markdown document in the current view into rich text and sends it to your Evernote. You will be able to choose a title, tags and the notebook where to store it.
@@ -123,6 +125,7 @@ Setting                   | Purpose
 
  * Current maintainer and new features:
    [bordaigorl](https://github.com/bordaigorl)
+   If you would like to contribute, please see [CONTRIBUTING].
  * Original ST2 Plugin:
    [jamiesun](https://github.com/jamiesun/SublimeEvernote)
  * Port to ST3:
@@ -138,3 +141,6 @@ Libraries (some adapted to work with Evernote formats):
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
  * HTML2Markdown: [Aaron Swartz](https://github.com/aaronsw/html2text)
  * Evernote API: <https://github.com/evernote/evernote-sdk-python>
+
+
+[CONTRIBUTING]: <CONTRIBUTING.md>
