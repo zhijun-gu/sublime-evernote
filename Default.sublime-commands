@@ -5,7 +5,7 @@
         "caption": "Evernote: Settings",
         "command": "open_file", "args":
         {
-            "file": "${packages}/User/SublimeEvernote.sublime-settings"
+            "file": "${packages}/User/Evernote.sublime-settings"
         }
     },
     { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },
