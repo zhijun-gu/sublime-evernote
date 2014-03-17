@@ -2,12 +2,20 @@
     { "command": "send_to_evernote", "caption": "Evernote: Send to Evernote" },
     { "command": "open_evernote_note", "caption": "Evernote: Open Evernote Note" },
     {
-        "caption": "Evernote: Settings",
+        "caption": "Evernote Settings: User",
         "command": "open_file", "args":
         {
             "file": "${packages}/User/Evernote.sublime-settings"
         }
     },
+    {
+        "caption": "Evernote Settings: Default",
+        "command": "open_file", "args":
+        {
+            "file": "${packages}/Evernote/Evernote.sublime-settings"
+        }
+    },
+    { "command": "reconfig_evernote", "caption": "Evernote Settings: Reconfigure Authorization" },
     { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },
-    { "command": "reconfig_evernote", "caption": "Evernote: Reconfigure" }
+    { "command": "new_evernote_note", "caption": "Evernote: Create new empty note" }
 ]
