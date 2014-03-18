@@ -468,7 +468,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag == "br" and start:
             if 'clear' in attrs:  # Evernote
-                self.pbr()
+                self.p_p = min(self.p_p+1, 2)
             else:
                 self.o("  \n")
 
