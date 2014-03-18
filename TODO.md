@@ -3,6 +3,10 @@
 Always available:
 
 + New empty note
++ Define a unified restricted format for metadata:
+    * in Evernote.tmLanguage
+    * in markdown2
+    * in sublime_evernote
 + **Open Note** add parameters:
   - `note_guid` to allow shortcut to favourite notes.
     If this is specified, the other parameters are ignored.
@@ -16,7 +20,9 @@ When view shows a note:
 + Save/Upload Note
 - Diff local note with online version (approx on the markdown!)
 
-- Autocomplete tags
+- Autocomplete tags/notebooks
+    + In metadata block (detect scope?)
+    + trigger autocomplete when prefix is `tags:` and `notebook:`
 
 - Status messages
 
@@ -34,3 +40,7 @@ When view shows a note:
 ## On query context
 
 + Just check for a note guid in metadata or in view settings
+
+## On query completions
+
+    def on_query_completions(self, view, prefix, locations):
