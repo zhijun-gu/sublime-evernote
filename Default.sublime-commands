@@ -1,6 +1,7 @@
 [
     { "command": "send_to_evernote", "caption": "Evernote: Send to Evernote" },
     { "command": "open_evernote_note", "caption": "Evernote: Open Evernote Note" },
+    { "command": "open_evernote_note", "args": {"by_searching": true}, "caption": "Evernote: Search Note" },
     {
         "caption": "Evernote Settings: User",
         "command": "open_file", "args":
