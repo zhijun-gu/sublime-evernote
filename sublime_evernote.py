@@ -276,8 +276,11 @@ class SendToEvernoteCommand(EvernoteDoText):
 
         if "title" in args:
             note.title = args["title"]
-        if "notebookGuid" in args:
-            note.notebookGuid = args["notebookGuid"]
+        if "notebook" in args:
+            try:
+                note.notebookGuid = self.notebook_from_name(args["notebook"]).guid
+            except:
+                note.notebookGuid = None
         if "tags" in args:
             note.tagNames = extractTags(args["tags"])
 
@@ -326,10 +329,13 @@ class SendToEvernoteCommand(EvernoteDoText):
             try:
                 self.message("Posting note, please wait...")
                 cnote = noteStore.createNote(self.token(), note)
-                self.message("Successfully posted note: guid:%s" % cnote.guid)
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
+                self.view.set_syntax_file(self.md_syntax)
+                if self.view.file_name() is None:
+                    self.view.set_name(cnote.title)
+                self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
             except Errors.EDAMUserException as e:
                 args = dict(title=note.title, notebookGuid=note.notebookGuid, tags=note.tagNames)
                 if e.errorCode == 9:
@@ -523,6 +529,7 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         view.set_syntax_file(self.md_syntax)
         view.show(0)
         view.run_command("insert_snippet", {"name": "Packages/Evernote/EvernoteMetadata.sublime-snippet"})
+
 
 class ReconfigEvernoteCommand(EvernoteDoWindow):
 
