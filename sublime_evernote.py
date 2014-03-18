@@ -107,8 +107,8 @@ def clear_cache():
     EvernoteDo._notebook_by_name = None
     EvernoteDo._notebook_by_guid = None
     EvernoteDo._notebooks_cache = None
-    EvernoteDo._tag_guid_cache = None
-    EvernoteDo._tag_name_cache = None
+    EvernoteDo._tag_guid_cache = {}
+    EvernoteDo._tag_name_cache = {}
 
 
 class EvernoteDo():
@@ -227,12 +227,14 @@ class EvernoteDo():
     def tag_from_name(self, name):
         if name not in EvernoteDo._tag_guid_cache:
             # This requires downloading the full list
-            tags = self.get_note_store().listTags(self.token())
-            for tag in tags:
-                EvernoteDo._tag_name_cache[tag.guid] = tag.name
-                EvernoteDo._tag_guid_cache[tag.name] = tag.guid
+            self.cache_all_tags()
         return EvernoteDo._tag_guid_cache[name]
 
+    def cache_all_tags(self):
+        tags = self.get_note_store().listTags(self.token())
+        for tag in tags:
+            EvernoteDo._tag_name_cache[tag.guid] = tag.name
+            EvernoteDo._tag_guid_cache[tag.name] = tag.guid
 
 class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 
@@ -558,10 +560,11 @@ class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
         LOG("Cache cleared!")
 
 
-class EvernoteListener(sublime_plugin.EventListener):
+class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
 
     def __init__(self):
-        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        # self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        self.load_settings()
 
     def on_post_save(self, view):
         if self.settings.get('update_on_save'):
@@ -576,3 +579,21 @@ class EvernoteListener(sublime_plugin.EventListener):
             res = not res
 
         return res
+
+    first_time = True
+
+    def on_query_completions(self, view, prefix, locations):
+        loc = locations[0]
+        if not view.scope_name(loc).startswith("text.html.markdown.evernote meta.metadata.evernote"):
+            return None
+        # print(prefix, locations)
+        if self.first_time:
+            self.cache_all_tags()
+            self.first_time = False
+
+        line = view.substr(view.line(loc)).lstrip()
+        if line.startswith("tags"):
+            return [[tag, tag] for tag in EvernoteDo._tag_name_cache.values() if tag.startswith(prefix)]
+        elif line.startswith("notebook"):
+            return [[nb.name, nb.name] for nb in self.get_notebooks() if nb.name.startswith(prefix)]
+        return None
