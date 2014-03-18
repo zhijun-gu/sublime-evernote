@@ -107,8 +107,8 @@ def clear_cache():
     EvernoteDo._notebook_by_name = None
     EvernoteDo._notebook_by_guid = None
     EvernoteDo._notebooks_cache = None
-    EvernoteDo._tag_guid_cache = None
-    EvernoteDo._tag_name_cache = None
+    EvernoteDo._tag_guid_cache = {}
+    EvernoteDo._tag_name_cache = {}
 
 
 class EvernoteDo():
