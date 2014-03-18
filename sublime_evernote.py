@@ -102,12 +102,25 @@ def find_syntax(lang, default=None):
     else:
         return (default or ("Packages/%s/%s.tmLanguage" % lang))
 
+def clear_cache():
+    EvernoteDo._noteStore = None
+    EvernoteDo._notebook_by_name = None
+    EvernoteDo._notebook_by_guid = None
+    EvernoteDo._notebooks_cache = None
+    EvernoteDo._tag_guid_cache = None
+    EvernoteDo._tag_name_cache = None
+
 
 class EvernoteDo():
 
     _noteStore = None
-    _notebooks_by_guid = None
-    _notebooks_by_name = None
+
+    _notebook_by_guid = None
+    _notebook_by_name = None
+    _notebooks_cache = None
+
+    _tag_name_cache = {}
+    _tag_guid_cache = {}
 
     MD_EXTRAS = {
         'footnotes'          : None,
@@ -116,9 +129,6 @@ class EvernoteDo():
         'markdown-in-html'   : None,
         'fenced-code-blocks' : {'noclasses': True, 'cssclass': "", 'style': "default"}
     }
-
-    TAG_CACHE_NAME = {}
-    TAG_CACHE_GUID = {}
 
     def token(self):
         return self.settings.get("token")
@@ -183,9 +193,9 @@ class EvernoteDo():
         return noteStore
 
     def get_notebooks(self):
-        if EvernoteDo._notebooks_by_name:
+        if EvernoteDo._notebooks_cache:
             LOG("Using cached notebooks list")
-            return list(EvernoteDo._notebooks_by_name.values())
+            return EvernoteDo._notebooks_cache
         notebooks = None
         try:
             noteStore = self.get_note_store()
@@ -194,34 +204,34 @@ class EvernoteDo():
             self.message("Fetched all notebooks!")
         except Exception as e:
             sublime.error_message('Error getting notebooks: %s' % e)
-        EvernoteDo._notebooks_by_name = dict([(nb.name, nb) for nb in notebooks])
-        EvernoteDo._notebooks_by_guid = dict([(nb.guid, nb) for nb in notebooks])
+        EvernoteDo._notebook_by_name = dict([(nb.name, nb) for nb in notebooks])
+        EvernoteDo._notebook_by_guid = dict([(nb.guid, nb) for nb in notebooks])
+        EvernoteDo._notebooks_cache = notebooks
         return notebooks
 
-    # TODO: dicts for notebook lookup?
     def notebook_from_guid(self, guid):
-        self.get_notebooks() # To trigger caching
-        return EvernoteDo._notebooks_by_guid[guid]
+        self.get_notebooks()  # To trigger caching
+        return EvernoteDo._notebook_by_guid[guid]
 
     def notebook_from_name(self, name):
-        self.get_notebooks()
-        return EvernoteDo._notebooks_by_name[name]
+        self.get_notebooks()  # To trigger caching
+        return EvernoteDo._notebook_by_name[name]
 
     def tag_from_guid(self, guid):
-        if guid not in EvernoteDo.TAG_CACHE_NAME:
+        if guid not in EvernoteDo._tag_name_cache:
             name = self.get_note_store().getTag(self.token(), guid).name
-            EvernoteDo.TAG_CACHE_NAME[guid] = name
-            EvernoteDo.TAG_CACHE_GUID[name] = guid
-        return EvernoteDo.TAG_CACHE_NAME[guid]
+            EvernoteDo._tag_name_cache[guid] = name
+            EvernoteDo._tag_guid_cache[name] = guid
+        return EvernoteDo._tag_name_cache[guid]
 
     def tag_from_name(self, name):
-        if name not in EvernoteDo.TAG_CACHE_GUID:
+        if name not in EvernoteDo._tag_guid_cache:
             # This requires downloading the full list
             tags = self.get_note_store().listTags(self.token())
             for tag in tags:
-                EvernoteDo.TAG_CACHE_NAME[tag.guid] = tag.name
-                EvernoteDo.TAG_CACHE_GUID[tag.name] = tag.guid
-        return EvernoteDo.TAG_CACHE_GUID[name]
+                EvernoteDo._tag_name_cache[tag.guid] = tag.name
+                EvernoteDo._tag_guid_cache[tag.name] = tag.guid
+        return EvernoteDo._tag_guid_cache[name]
 
 
 class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
@@ -537,18 +547,14 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
         self.window = sublime.active_window()
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
         self.settings.erase("token")
-        EvernoteDo._noteStore = None
-        EvernoteDo._notebooks_by_name = None
-        EvernoteDo._notebooks_by_guid = None
+        clear_cache()
         self.connect(lambda: True)
 
 
 class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        EvernoteDo._noteStore = None
-        EvernoteDo._notebooks_by_name = None
-        EvernoteDo._notebooks_by_guid = None
+        clear_cache()
         LOG("Cache cleared!")
 
 
