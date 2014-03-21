@@ -7,12 +7,9 @@ Always available:
     * in Evernote.tmLanguage
     * in markdown2
     * in sublime_evernote
-+ **Open Note** add parameters:
-  - `note_guid` to allow shortcut to favourite notes.
-    If this is specified, the other parameters are ignored.
-  - `by_searching` to show prompt for a search query.
-  - `from_notebook` to filter notes by notebook.
-  - `with_tags` (list) to filter notes by tag.
++ **Clip to note**: send *selection* to Evernote.
+  This would not set the `$evernote` flag, always ask for notebook/note name/tags and detect language of selection: if it's markdown, convert, if it's html send as it is, otherwise pygmentize and send.
++ **Attach to note**: prompt the user to select note, then attach a new resource to it with the contents of the current view.
 
 When view shows a note:
 
@@ -25,6 +22,12 @@ When view shows a note:
     + trigger autocomplete when prefix is `tags:` and `notebook:`
 
 - Status messages
+
+# Highlighting invalid tags/attributes
+
+Example: `<style>...<div id="...">` would mark them as invalid.
+However this requires copying the Markdown language modifying only some parts.
+Not very modular. Enough?
 
 # Event Listeners
 
