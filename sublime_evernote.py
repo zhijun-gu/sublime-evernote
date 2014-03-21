@@ -145,7 +145,7 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['inline-css'] = css
         self.md_syntax = self.settings.get("md_syntax")
         if not self.md_syntax:
-            self.md_syntax = find_syntax("Markdown")
+            self.md_syntax = find_syntax("Evernote")
 
     def message(self, msg):
         sublime.status_message(msg)
