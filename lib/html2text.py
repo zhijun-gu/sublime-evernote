@@ -642,7 +642,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag == "en-media":
             if start:
-                self.out(tag_str(tag, attrs, 2))
+                self.out('\n'+tag_str(tag, attrs, 2))
             return
 
         if tag == "en-crypt":

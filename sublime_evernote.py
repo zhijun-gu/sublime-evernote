@@ -558,7 +558,13 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
             resources = note.resources or []
             resources.append(attachment)
             if insert_in_content and note.content.endswith("</en-note>"):  # just a precaution
-                note.content = note.content[0:-10] + \
+                builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
+                if builtin >= 0:
+                    builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
+                    content = note.content[0:builtin]+note.content[builtin_end+len(SUBLIME_EVERNOTE_COMMENT_END)+1:]
+                else:
+                    content = note.content
+                note.content = content[0:-10] + \
                     '<en-media hash="%s" type="%s"/></en-note>' % (h.hexdigest(), mime)
             note.resources = resources
             noteStore.updateNote(self.token(), note)
