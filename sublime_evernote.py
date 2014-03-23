@@ -400,7 +400,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
     def do_run(self, note_guid=None, by_searching=None,
                from_notebook=None, with_tags=None,
-               order=None, ascending=None, convert=True):
+               order=None, ascending=None, **kwargs):
         noteStore = self.get_note_store()
         notebooks = self.get_notebooks()
 
@@ -434,7 +434,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 if i < 0:
                     return
                 self.message('Retrieving note "%s"...' % notes[i].title)
-                self.open_note(notes[i].guid, convert)
+                self.open_note(notes[i].guid, **kwargs)
             if show_notebook:
                 menu = [self.notebook_from_guid(note.notebookGuid).name + ": " + note.title for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
@@ -455,7 +455,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             notes_panel(self.find_notes(search_args), True)
 
         if note_guid:
-            self.open_note(note_guid, convert)
+            self.open_note(note_guid, **kwargs)
             return
 
         if by_searching:
@@ -477,7 +477,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             None, self.settings.get("max_notes", 100),
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
-    def open_note(self, guid, convert):
+    def open_note(self, guid, convert=True, **unk_args):
         try:
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
@@ -525,6 +525,44 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.set_syntax_file(syntax)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
+        except Errors.EDAMNotFoundException as e:
+            sublime.error_message("The note with the specified guid could not be found.")
+        except Errors.EDAMUserException:
+            sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
+
+
+class AttachToEvernoteNote(OpenEvernoteNoteCommand):
+
+    def open_note(self, guid, insert_in_content=True, **unk_args):
+        import hashlib, mimetypes
+        view = self.window.active_view()
+        filename = view.file_name() or ""
+        if view is None:
+            self.message("You need to open the file to be attached first!")
+            return
+        contents = view.substr(sublime.Region(0, view.size())).encode('utf8')
+        try:
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, True, False, False, False)
+            mime = mimetypes.guess_type(filename)
+            h = hashlib.md5(contents)
+            if not isinstance(mime, str):
+                mime = "text/plain"
+            attachment = Types.Resource(
+                # noteGuid=guid,
+                mime=mime,
+                data=Types.Data(body=contents, size=len(contents), bodyHash=h.digest()),
+                attributes=Types.ResourceAttributes(
+                    fileName=os.path.basename(filename),
+                    attachment=True))
+            resources = note.resources or []
+            resources.append(attachment)
+            if insert_in_content and note.content.endswith("</en-note>"):  # just a precaution
+                note.content = note.content[0:-10] + \
+                    '<en-media hash="%s" type="%s"/></en-note>' % (h.hexdigest(), mime)
+            note.resources = resources
+            noteStore.updateNote(self.token(), note)
+            self.message("Succesfully attached to note '%s'" % note.title)
         except Errors.EDAMNotFoundException as e:
             sublime.error_message("The note with the specified guid could not be found.")
         except Errors.EDAMUserException:
