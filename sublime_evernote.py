@@ -531,6 +531,17 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
 
 
+class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        url = self.view.settings().get("noteStoreUrl")[0:-9] + "view/%s"
+        self.view.window().run_command("open_url", {"url": url % self.view.settings().get("$evernote_guid")})
+
+    def is_enabled(self):
+        if self.view.settings().get("$evernote_guid", False):
+            return True
+        return False
+
+
 class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
 
     def run(self):
