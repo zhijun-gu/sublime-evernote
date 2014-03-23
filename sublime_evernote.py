@@ -531,6 +531,44 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
 
 
+class AttachToEvernoteNote(OpenEvernoteNoteCommand):
+
+    def open_note(self, guid, insert_in_content=True, **unk_args):
+        import hashlib, mimetypes
+        view = self.window.active_view()
+        filename = view.file_name() or ""
+        if view is None:
+            self.message("You need to open the file to be attached first!")
+            return
+        contents = view.substr(sublime.Region(0, view.size())).encode('utf8')
+        try:
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, True, False, False, False)
+            mime = mimetypes.guess_type(filename)
+            h = hashlib.md5(contents)
+            if not isinstance(mime, str):
+                mime = "text/plain"
+            attachment = Types.Resource(
+                # noteGuid=guid,
+                mime=mime,
+                data=Types.Data(body=contents, size=len(contents), bodyHash=h.digest()),
+                attributes=Types.ResourceAttributes(
+                    fileName=os.path.basename(filename),
+                    attachment=True))
+            resources = note.resources or []
+            resources.append(attachment)
+            if insert_in_content and note.content.endswith("</en-note>"):  # just a precaution
+                note.content = note.content[0:-10] + \
+                    '<en-media hash="%s" type="%s"/></en-note>' % (h.hexdigest(), mime)
+            note.resources = resources
+            noteStore.updateNote(self.token(), note)
+            self.message("Succesfully attached to note '%s'" % note.title)
+        except Errors.EDAMNotFoundException as e:
+            sublime.error_message("The note with the specified guid could not be found.")
+        except Errors.EDAMUserException:
+            sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
+
+
 class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
 
     def run(self):
