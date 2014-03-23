@@ -400,7 +400,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
     def do_run(self, note_guid=None, by_searching=None,
                from_notebook=None, with_tags=None,
-               order=None, ascending=None, convert=True):
+               order=None, ascending=None, **kwargs):
         noteStore = self.get_note_store()
         notebooks = self.get_notebooks()
 
@@ -434,7 +434,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 if i < 0:
                     return
                 self.message('Retrieving note "%s"...' % notes[i].title)
-                self.open_note(notes[i].guid, convert)
+                self.open_note(notes[i].guid, **kwargs)
             if show_notebook:
                 menu = [self.notebook_from_guid(note.notebookGuid).name + ": " + note.title for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
@@ -455,7 +455,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             notes_panel(self.find_notes(search_args), True)
 
         if note_guid:
-            self.open_note(note_guid, convert)
+            self.open_note(note_guid, **kwargs)
             return
 
         if by_searching:
@@ -477,7 +477,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             None, self.settings.get("max_notes", 100),
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
-    def open_note(self, guid, convert):
+    def open_note(self, guid, convert=True, **unk_args):
         try:
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
