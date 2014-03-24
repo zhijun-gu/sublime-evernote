@@ -9,7 +9,6 @@ Always available:
     * in sublime_evernote
 + **Clip to note**: send *selection* to Evernote.
   This would not set the `$evernote` flag, always ask for notebook/note name/tags and detect language of selection: if it's markdown, convert, if it's html send as it is, otherwise pygmentize and send.
-+ **Attach to note**: prompt the user to select note, then attach a new resource to it with the contents of the current view.
 
 When view shows a note:
 

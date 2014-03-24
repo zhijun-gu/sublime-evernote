@@ -13,6 +13,7 @@ To start using it install it from Package Control and type "Evernote" on the Com
  * **Open a note from Evernote**: shows panels to choose a note from a notebook, converts it to markdown and presents it in a view.
  * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
  * **Full two-way metadata support**: you can set and change the note's title, notebook and tag just by providing a YAML metadata header in your markdown source.
+ * **Attach to note**: adds the currently opened file as an attachment to a note selected from a panel.
 
 # Installation
 
@@ -74,7 +75,7 @@ You will be able to specify the title, tags and notebook either from panels or w
 
 This will open a panel from which you can select a notebook and a note in it.
 The selected note will be converted in markdown format and opened in a view.
-This command only handles the main contents of the note and ignores the attachments.
+This command only handles the main contents of the note and ignores the attachments, but existing attachments will be left as they are.
 
 ### Search Note
 
@@ -93,6 +94,13 @@ or `ctrl+s` on views displaying an Evernote note.
 When the current view is associated with an Evernote note (maybe because you just sent it to Evernote or because it is an opened note) you can update the note with this command.
 The [metadata](#metadata) will be updated according to the metadata block and attachments stored in the original Evernote note will be left alone.
 
+### Attach to Note
+
+`Command Palette` > `Evernote: Attach current file to a note`
+
+This will open a panel from which you can select a notebook and a note in it.
+The currently opened file will then be attached to the selected note.
+Existing attachments of the selected note will remain untouched.
 
 ## Metadata
 
