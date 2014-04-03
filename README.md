@@ -122,6 +122,10 @@ When sending or updating the note, the plugin will extract this metadata and set
 
 The `tags` field can be an unquoted list or a json list such as `["my long tag", "tag2"]`.
 
+# Equations
+
+While equations are not natively supported by Evernote, you can embed them as images. The [Insert Equation](https://github.com/bordaigorl/sublime-inserteq) plugin can be used to ease their insertion into your Markdown note.
+
 # Settings
 
 The `Evernote.sublime-settings` can be accessed from `Preferences > Package Settings > Evernote`.
