@@ -56,38 +56,6 @@ def extractTags(tags):
     return tags
 
 
-# TODO: move to EvernoteDo and remove notebooks arg
-def populate_note(note, view, notebooks=[]):
-    if view:
-        contents = view.substr(sublime.Region(0, view.size()))
-        body = markdown2.markdown(contents, extras=EvernoteDo.MD_EXTRAS)
-        meta = body.metadata or {}
-        content = '<?xml version="1.0" encoding="UTF-8"?>'
-        content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
-        content += '<en-note>'
-        hidden = ('\n%s%s%s\n' %
-                    (SUBLIME_EVERNOTE_COMMENT_BEG,
-                     b64encode(contents.encode('utf8')).decode('utf8'),
-                     SUBLIME_EVERNOTE_COMMENT_END))
-        content += hidden
-        content += body
-        LOG(body)
-        content += '</en-note>'
-        note.title = meta.get("title", note.title)
-        tags = meta.get("tags", note.tagNames)
-        if tags is not None:
-            tags = extractTags(tags)
-        LOG(tags)
-        note.tagNames = tags
-        note.content = content
-        if "notebook" in meta:
-            for nb in notebooks:
-                if nb.name == meta["notebook"]:
-                    note.notebookGuid = nb.guid
-                    break
-    return note
-
-
 def append_to_view(view, text):
     view.run_command('append', {
         'characters': text,
@@ -101,6 +69,21 @@ def find_syntax(lang, default=None):
         return res[-1]
     else:
         return (default or ("Packages/%s/%s.tmLanguage" % lang))
+
+
+LANG_CODES = {
+    'text.html.markdown': '',
+    'text.html.markdown.gfm': 'md',
+    'text.plain': ''
+}
+
+
+def language_name(scope):
+    for s in scope.split(' '):
+        if s.startswith("source.") or s.startswith("text."):
+            return LANG_CODES.get(s, s.split('.')[1])
+    return ""
+
 
 def clear_cache():
     EvernoteDo._noteStore = None
@@ -233,6 +216,37 @@ class EvernoteDo():
                 EvernoteDo._tag_guid_cache[tag.name] = tag.guid
         return EvernoteDo._tag_guid_cache[name]
 
+    def populate_note(self, note, contents):
+        if isinstance(contents, sublime.View):
+            contents = contents.substr(sublime.Region(0, contents.size()))
+        body = markdown2.markdown(contents, extras=EvernoteDo.MD_EXTRAS)
+        meta = body.metadata or {}
+        content = '<?xml version="1.0" encoding="UTF-8"?>'
+        content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
+        content += '<en-note>'
+        hidden = ('\n%s%s%s\n' %
+                    (SUBLIME_EVERNOTE_COMMENT_BEG,
+                     b64encode(contents.encode('utf8')).decode('utf8'),
+                     SUBLIME_EVERNOTE_COMMENT_END))
+        content += hidden
+        content += body
+        LOG(body)
+        content += '</en-note>'
+        note.title = meta.get("title", note.title)
+        tags = meta.get("tags", note.tagNames)
+        if tags is not None:
+            tags = extractTags(tags)
+        LOG(tags)
+        note.tagNames = tags
+        note.content = content
+        if "notebook" in meta:
+            notebooks = self.get_notebooks()
+            for nb in notebooks:
+                if nb.name == meta["notebook"]:
+                    note.notebookGuid = nb.guid
+                    break
+        return note
+
 
 class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 
@@ -281,8 +295,7 @@ class SendToEvernoteCommand(EvernoteDoText):
     def do_send(self, **args):
         noteStore = self.get_note_store()
         note = Types.Note()
-
-        default_tags = args.get("default_tags", "")
+        view = self.view
 
         if "title" in args:
             note.title = args["title"]
@@ -294,15 +307,51 @@ class SendToEvernoteCommand(EvernoteDoText):
         if "tags" in args:
             note.tagNames = extractTags(args["tags"])
 
+        default_tags = args.get("default_tags", "")
+        default_title = ""
+        contents = ""
+        clip = args.get("clip", False)
+        if clip:
+            if not view.has_non_empty_selection_region():
+                sels = [sublime.Region(0, view.size())]
+            else:
+                sels = view.sel()
+            import re
+            INDENT = re.compile(r'^\s*', re.M)
+            snippets = []
+            for region in sels:
+                if region.size() > 0:
+                    lang = language_name(view.scope_name(region.begin()))
+                    snippet = view.substr(region)
+                    # deindent if necessary
+                    strip = None
+                    for m in INDENT.findall(snippet):
+                        l = len(m)
+                        if l <= (strip or l):
+                            strip = l
+                        if strip == 0:
+                            break
+                    # strip = min([len(m) for m in INDENT.findall(snippet)])
+                    if strip > 0:
+                        snippet = '\n'.join([line[strip:] for line in snippet.splitlines()])
+                    snippets.append("```%s\n%s\n```" % (lang, snippet))
+            contents = "\n\n".join(snippets) + "\n"
+            print("JUDE:", contents)
+            if view.file_name():
+                default_title = "Clip from "+os.path.basename(view.file_name())
+        else:
+            contents = view.substr(sublime.Region(0, view.size()))
+
         notebooks = self.get_notebooks()
-        populate_note(note, self.view, notebooks)
+        self.populate_note(note, contents)
 
         def on_cancel():
             self.message("Note not sent.")
 
         def choose_title():
             if not note.title:
-                self.window.show_input_panel("Title (required):", "", choose_tags, None, on_cancel)
+                self.window.show_input_panel(
+                    "Title (required):", default_title, choose_tags, None, on_cancel)
             else:
                 choose_tags()
 
@@ -310,7 +359,8 @@ class SendToEvernoteCommand(EvernoteDoText):
             if title is not None:
                 note.title = title
             if note.tagNames is None:
-                self.window.show_input_panel("Tags (Optional):", default_tags, choose_notebook, None, on_cancel)
+                self.window.show_input_panel(
+                    "Tags (Optional):", default_tags, choose_notebook, None, on_cancel)
             else:
                 choose_notebook()
 
@@ -339,12 +389,13 @@ class SendToEvernoteCommand(EvernoteDoText):
             try:
                 self.message("Posting note, please wait...")
                 cnote = noteStore.createNote(self.token(), note)
-                self.view.settings().set("$evernote", True)
-                self.view.settings().set("$evernote_guid", cnote.guid)
-                self.view.settings().set("$evernote_title", cnote.title)
-                self.view.set_syntax_file(self.md_syntax)
-                if self.view.file_name() is None:
-                    self.view.set_name(cnote.title)
+                if not clip:
+                    view.settings().set("$evernote", True)
+                    view.settings().set("$evernote_guid", cnote.guid)
+                    view.settings().set("$evernote_title", cnote.title)
+                    view.set_syntax_file(self.md_syntax)
+                    if view.file_name() is None:
+                        view.set_name(cnote.title)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
             except Errors.EDAMUserException as e:
                 args = dict(title=note.title, notebookGuid=note.notebookGuid, tags=note.tagNames)
@@ -368,7 +419,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
         note.title = self.view.settings().get("$evernote_title")
         note.guid = self.view.settings().get("$evernote_guid")
 
-        populate_note(note, self.view, self.get_notebooks())
+        self.populate_note(note, self.view)
 
         self.message("Updating note, please wait...")
 
