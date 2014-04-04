@@ -30,6 +30,8 @@ import webbrowser
 import markdown2
 import html2text
 
+from datetime import datetime, timedelta
+
 from base64 import b64encode, b64decode
 
 USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
@@ -85,6 +87,25 @@ def language_name(scope):
     return ""
 
 
+def datestr(d):
+    d = datetime.fromtimestamp(d // 1000)
+    n = datetime.now()
+    delta = n - d
+    if delta.days == 0:
+        if delta.seconds <= 3600 == 0:
+            if delta.seconds <= 60 == 0:
+                return "just now"
+            else:
+                return "few minutes ago"
+        else:
+            return "few hours ago"
+    elif delta.days == 1:
+        return "yesterday"
+    elif delta.days == 2:
+        return "2 days ago"
+    return d.strftime("on %d/%m/%y")
+
+
 def clear_cache():
     EvernoteDo._noteStore = None
     EvernoteDo._notebook_by_name = None
@@ -132,6 +153,14 @@ class EvernoteDo():
 
     def message(self, msg):
         sublime.status_message(msg)
+
+    def update_status_info(self, note, view=None):
+        view = view or (self.view if hasattr(self, "view") else None)
+        if not view:
+            return
+        info = "Note created %s, updated %s, %s attachments" % (
+            datestr(note.created), datestr(note.updated), len(note.resources or []))
+        view.set_status("Evernote-info", info)
 
     def connect(self, callback, **kwargs):
         self.message("initializing..., please wait...")
@@ -218,6 +247,7 @@ class EvernoteDo():
         for tag in tags:
             EvernoteDo._tag_name_cache[tag.guid] = tag.name
             EvernoteDo._tag_guid_cache[tag.name] = tag.guid
+
     def populate_note(self, note, contents):
         if isinstance(contents, sublime.View):
             contents = contents.substr(sublime.Region(0, contents.size()))
@@ -338,7 +368,6 @@ class SendToEvernoteCommand(EvernoteDoText):
                         snippet = '\n'.join([line[strip:] for line in snippet.splitlines()])
                     snippets.append("```%s\n%s\n```" % (lang, snippet))
             contents = "\n\n".join(snippets) + "\n"
-            print("JUDE:", contents)
             if view.file_name():
                 default_title = "Clip from "+os.path.basename(view.file_name())
         else:
@@ -399,6 +428,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                     if view.file_name() is None:
                         view.set_name(cnote.title)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
+                self.update_status_info(cnote)
             except Errors.EDAMUserException as e:
                 args = dict(title=note.title, notebookGuid=note.notebookGuid, tags=note.tagNames)
                 if e.errorCode == 9:
@@ -432,6 +462,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
                 self.message("Successfully updated note: guid:%s" % cnote.guid)
+                self.update_status_info(cnote)
             except Errors.EDAMUserException as e:
                 if e.errorCode == 9:
                     self.connect(self.__update_note)
@@ -578,6 +609,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.set_syntax_file(syntax)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
+            self.update_status_info(note, newview)
         except Errors.EDAMNotFoundException as e:
             sublime.error_message("The note with the specified guid could not be found.")
         except Errors.EDAMUserException:
@@ -645,7 +677,7 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         self.load_settings()
         view = self.window.new_file()
         view.set_syntax_file(self.md_syntax)
-        view.show(0)
+        view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.run_command("insert_snippet", {"name": "Packages/Evernote/EvernoteMetadata.sublime-snippet"})
 
 
@@ -692,7 +724,6 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
         loc = locations[0]
         if not view.scope_name(loc).startswith("text.html.markdown.evernote meta.metadata.evernote"):
             return None
-        # print(prefix, locations)
         if self.first_time:
             self.cache_all_tags()
             self.first_time = False
