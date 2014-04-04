@@ -692,7 +692,8 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.set_scratch(True)
         view.run_command("insert_snippet", {"contents": META_SNIPPET})
-        sublime.set_timeout(lambda: view.run_command("auto_complete"), 10)
+        if self.settings.get('evernote_autocomplete'):
+            sublime.set_timeout(lambda: view.run_command("auto_complete"), 10)
 
 
 class ReconfigEvernoteCommand(EvernoteDoWindow):
@@ -735,6 +736,8 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
     first_time = True
 
     def on_query_completions(self, view, prefix, locations):
+        if not self.settings.get('evernote_autocomplete'):
+            return
         loc = locations[0]
         if not view.scope_name(loc).startswith("text.html.markdown.evernote meta.metadata.evernote"):
             return None
