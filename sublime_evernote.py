@@ -68,7 +68,7 @@ def find_syntax(lang, default=None):
     if res:
         return res[-1]
     else:
-        return (default or ("Packages/%s/%s.tmLanguage" % lang))
+        return (default or ("Packages/%s/%s.tmLanguage" % (lang, lang)))
 
 
 LANG_CODES = {
