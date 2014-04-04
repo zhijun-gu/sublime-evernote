@@ -671,6 +671,18 @@ class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
         return False
 
 
+META_SNIPPET = """\
+---
+title: $3
+notebook: $1
+tags:$2
+---
+
+$0
+
+"""
+
+
 class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
 
     def run(self):
@@ -678,7 +690,9 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         view = self.window.new_file()
         view.set_syntax_file(self.md_syntax)
         view.set_status("Evernote-info", "Send to evernote to save your edits")
-        view.run_command("insert_snippet", {"name": "Packages/Evernote/EvernoteMetadata.sublime-snippet"})
+        view.set_scratch(True)
+        view.run_command("insert_snippet", {"contents": META_SNIPPET})
+        sublime.set_timeout(lambda: view.run_command("auto_complete"), 10)
 
 
 class ReconfigEvernoteCommand(EvernoteDoWindow):
