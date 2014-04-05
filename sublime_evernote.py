@@ -107,15 +107,6 @@ def datestr(d):
     return d.strftime("on %d/%m/%y")
 
 
-def clear_cache():
-    EvernoteDo._noteStore = None
-    EvernoteDo._notebook_by_name = None
-    EvernoteDo._notebook_by_guid = None
-    EvernoteDo._notebooks_cache = None
-    EvernoteDo._tag_guid_cache = {}
-    EvernoteDo._tag_name_cache = {}
-
-
 class EvernoteDo():
 
     _noteStore = None
@@ -248,6 +239,15 @@ class EvernoteDo():
         for tag in tags:
             EvernoteDo._tag_name_cache[tag.guid] = tag.name
             EvernoteDo._tag_guid_cache[tag.name] = tag.guid
+
+    @staticmethod
+    def clear_cache():
+        EvernoteDo._noteStore = None
+        EvernoteDo._notebook_by_name = None
+        EvernoteDo._notebook_by_guid = None
+        EvernoteDo._notebooks_cache = None
+        EvernoteDo._tag_guid_cache = {}
+        EvernoteDo._tag_name_cache = {}
 
     def populate_note(self, note, contents):
         if isinstance(contents, sublime.View):
@@ -703,14 +703,14 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
         self.window = sublime.active_window()
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
         self.settings.erase("token")
-        clear_cache()
+        self.clear_cache()
         self.connect(lambda: True)
 
 
 class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        clear_cache()
+        EvernoteDo.clear_cache()
         LOG("Cache cleared!")
 
 
