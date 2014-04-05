@@ -73,17 +73,18 @@ def find_syntax(lang, default=None):
         return (default or ("Packages/%s/%s.tmLanguage" % (lang, lang)))
 
 
-LANG_CODES = {
-    'text.html.markdown': '',
-    'text.html.markdown.gfm': 'md',
-    'text.plain': ''
-}
-
-
 def language_name(scope):
     for s in scope.split(' '):
-        if s.startswith("source.") or s.startswith("text."):
-            return LANG_CODES.get(s, s.split('.')[1])
+        names = s.split('.')
+        if s.startswith("source."):
+            return names[1]
+        elif s.startswith("text."):
+            if "markdown" in names:
+                return "markdown"
+            elif names[1] == "plain":
+                return ""
+            else:
+                return names[-1]
     return ""
 
 
