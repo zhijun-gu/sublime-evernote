@@ -10,10 +10,6 @@ When view shows a note:
 
 - Diff local note with online version (approx on the markdown!)
 
-- Autocomplete tags/notebooks
-    + In metadata block (detect scope?)
-    + trigger autocomplete when prefix is `tags:` and `notebook:`
-
 ## Highlighting invalid tags/attributes
 
 Example: `<style>...<div id="...">` would mark them as invalid.
