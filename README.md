@@ -155,8 +155,9 @@ Setting                   | Purpose
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
  * Other contributors:
    [mwcraig](https://github.com/mwcraig),
-   [rayou](https://github.com/rayou) and
-   [dimfeld](https://github.com/dimfeld).
+   [rayou](https://github.com/rayou),
+   [dimfeld](https://github.com/dimfeld) and
+   [paki](https://github.com/paki).
 
 Libraries (some adapted to work with Evernote formats):
 
