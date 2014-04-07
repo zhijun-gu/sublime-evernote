@@ -58,6 +58,18 @@ def extractTags(tags):
     return tags
 
 
+METADATA_HEADER = """\
+---
+title: %s
+tags: %s
+notebook: %s
+---
+
+"""
+def metadata_header(title="", tags=[], notebook="", **kw):
+    return METADATA_HEADER % (title, json.dumps(tags, ensure_ascii=False), notebook)
+
+
 def append_to_view(view, text):
     view.run_command('append', {
         'characters': text,
@@ -576,11 +588,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 # tags = [noteStore.getTag(self.token(), guid).name for guid in (note.tagGuids or [])]
                 # tags = [self.tag_from_guid(guid) for guid in (note.tagGuids or [])]
                 tags = noteStore.getNoteTagNames(self.token(), note.guid)
-                meta = "---\n"
-                meta += "title: %s\n" % (note.title or "Untitled")
-                meta += "tags: %s\n" % (json.dumps(tags, ensure_ascii=False))
-                meta += "notebook: %s\n" % nb_name
-                meta += "---\n\n"
+                meta = metadata_header(note.title, tags, nb_name)
                 builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
                 if builtin >= 0:
                     try:
