@@ -17,18 +17,8 @@ To start using it install it from Package Control and type "Evernote" on the Com
 
 # Installation
 
-Clone this repository with
-
-```sh
-$ git clone http://github.com/bordaigorl/sublime-evernote.git
-```
-
-in
-
-* Windows: `%APPDATA%/Roaming/Sublime Text 3/Packages/`
-* OSX: `~/Library/Application Support/Sublime Text 3/Packages/`
-* Linux: `~/.Sublime Text 3/Packages/`
-* Portable Installation: `Sublime Text 3/Data/`
+The Evernote plugin can be installed using Package Control.
+See the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Installation) for detailed instructions.
 
 # Usage
 
@@ -36,7 +26,7 @@ in
 
 When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the token data in `Sublime Text 3/Packages/User/SublimeEvernote.sublime-settings`.
 
-If you need to reconfigure the plugin go to `Preferences > Package Settings > Evernote` and select `Reconfigure Authorisation` or goto
+If you need to reconfigure the plugin go to `Preferences > Package Settings > Evernote` and select `Reconfigure Authorisation` or go to
 
 `Command Palette` > `Evernote: Reconfigure`
 
