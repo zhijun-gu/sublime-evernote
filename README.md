@@ -25,6 +25,7 @@ See [Commands](#commands) and the [wiki] for details.
  + [Search note](#search-note) command added
  + [Attach](#attach-to-note) command added
  + [Clip](#clip-to-note) command added
+ + [View in WebApp](#view-note-in-webapp) command added
  + Autocomplete in metadata block
  + Unicode chars in tags properly displayed
 
@@ -114,6 +115,12 @@ Existing attachments of the selected note will remain untouched.
 `Command Palette` > `Evernote: Clip to Evernote as a new note`
 
 This command will take the current selections, format them as highlighted code snippets, put them in a new note, letting you choose its title, tags and notebook.
+
+### View note in WebApp
+
+`Command Palette` > `Evernote: View note in WebApp`
+
+This command will open the currently opened note in Evernote's WebApp in a browser. From there you can view it, share it or continuing editing it from the WebApp's editor. You may need to login before being able to view the note.
 
 ## Metadata
 
