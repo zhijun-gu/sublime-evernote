@@ -14,11 +14,14 @@ To start using it install it from Package Control and type "Evernote" on the Com
  * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
  * **Full two-way metadata support**: you can set and change the note's title, notebook and tag just by providing a YAML metadata header in your markdown source.
  * **Attach to note**: adds the currently opened file as an attachment to a note selected from a panel.
+ * **Clip to note**: saves the current selection as code snippets to a new note.
+
+See [Commands](#commands) and the [wiki] for details.
 
 # Installation
 
 The Evernote plugin can be installed using Package Control.
-See the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Installation) for detailed instructions.
+See the [wiki] for detailed instructions.
 
 # Usage
 
@@ -77,7 +80,7 @@ You will be presented with a prompt where you can write a query in the Evernote 
 A panel will show the search results from which you can select a note.
 The selected note will be converted in markdown format and opened in a view.
 
-For more details about the parameters of this command see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/The-Open-Note-Command).
+For more details about the parameters of this command see the [wiki].
 
 ### Update Note
 
@@ -167,3 +170,4 @@ Libraries (some adapted to work with Evernote formats):
 
 
 [CONTRIBUTING]: <CONTRIBUTING.md>
+[wiki]: https://github.com/bordaigorl/sublime-evernote/wiki/
