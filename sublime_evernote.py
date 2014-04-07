@@ -40,7 +40,7 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     def LOG(*args):
