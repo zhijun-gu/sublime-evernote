@@ -18,6 +18,16 @@ To start using it install it from Package Control and type "Evernote" on the Com
 
 See [Commands](#commands) and the [wiki] for details.
 
+## What's new
+
+**v2.5.0**
+
+ + [Search note](#search-note) command added
+ + [Attach](#attach-to-note) command added
+ + [Clip](#clip-to-note) command added
+ + Autocomplete in metadata block
+ + Unicode chars in tags properly displayed
+
 # Installation
 
 The Evernote plugin can be installed using Package Control.
