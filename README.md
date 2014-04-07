@@ -29,6 +29,7 @@ See [Commands](#commands) and the [wiki] for details.
  + [View in WebApp](#view-note-in-webapp) command added
  + Autocomplete in metadata block
  + Unicode chars in tags properly displayed
+ + Creation and update dates are displayed in status
 
 # Installation
 
