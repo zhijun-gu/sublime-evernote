@@ -10,5 +10,6 @@
     },
     "code_highlighting_style": "github",
     "code_friendly": false,
-    "notes_order": "updated"
+    "notes_order": "updated",
+    "evernote_autocomplete": true
 }
