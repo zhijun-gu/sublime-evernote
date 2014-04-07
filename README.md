@@ -96,6 +96,12 @@ This will open a panel from which you can select a notebook and a note in it.
 The currently opened file will then be attached to the selected note.
 Existing attachments of the selected note will remain untouched.
 
+### Clip as new Note
+
+`Command Palette` > `Evernote: Clip to Evernote as a new note`
+
+This command will take the current selections, format them as highlighted code snippets, put them in a new note, letting you choose its title, tags and notebook.
+
 ## Metadata
 
 A markdown source can start with a metadata block like the following:
@@ -111,6 +117,8 @@ notebook: My Notebook
 When sending or updating the note, the plugin will extract this metadata and set/change it accordingly. When such header is incomplete or missing, when sending the note to Evernote the plugin will ask for input for the missing fields.
 
 The `tags` field can be an unquoted list or a json list such as `["my long tag", "tag2"]`.
+
+**PLEASE NOTE**: the format for the metadata is currently rather restricted and it is just a small subset of YAML. The only recognised keys are `title`, `tags` and `notebook`, the others will be ignored and can be discarded (for example if you edit the note from other clients). 
 
 # Equations
 
