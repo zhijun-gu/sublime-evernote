@@ -121,6 +121,8 @@ When sending or updating the note, the plugin will extract this metadata and set
 
 The `tags` field can be an unquoted list or a json list such as `["my long tag", "tag2"]`.
 
+If the `evernote_autocomplete` is true, the list of notebooks and tags will be offered as autocompletion in the metadata block.
+
 **PLEASE NOTE**: the format for the metadata is currently rather restricted and it is just a small subset of YAML. The only recognised keys are `title`, `tags` and `notebook`, the others will be ignored and can be discarded (for example if you edit the note from other clients). 
 
 # Equations
@@ -139,11 +141,12 @@ Setting                   | Purpose
 --------------------------|------------------------
 `md_syntax`               | a string pointing to a `tmLanguage` file which you want to associate with notes opened from Evernote.
 `inline_css`              | a dictionary associating some HTML element names to inline CSS styles; currently the only elements that can be styled in this way are: `pre`, `code`, `h1`, `hr`, `blockquote` and `sup`. Additionally `footnotes` can be associated to some style for the `div` containing the footnotes at the end of the note. The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed). See [here](http://dev.evernote.com/doc/articles/enml.php) for details.
-`code_highlighting_style` | a pygments style among `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`,   `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
+`code_highlighting_style` | a pygments style among `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`, `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
 `code_friendly`           | if `true` the `code-friendly` extra of markdown2 is enabled
+`evernote_autocomplete`   | when this setting is true, suggestions will be offered for autocompletion of the `notebook` and `tags` fields in metadata. Default is true.
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.
-`update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false. 
+`update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
 
 
 # Acknowledgements
