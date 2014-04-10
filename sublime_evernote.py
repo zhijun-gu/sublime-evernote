@@ -724,9 +724,7 @@ class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
 
 class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
 
-    def __init__(self):
-        # self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
-        self.load_settings()
+    settings = {}
 
     def on_post_save(self, view):
         if self.settings.get('update_on_save'):
@@ -760,3 +758,7 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
         elif line.startswith("notebook"):
             return [[nb.name, nb.name] for nb in self.get_notebooks() if nb.name.startswith(prefix)]
         return None
+
+
+def plugin_loaded():
+    EvernoteListener.load_settings(EvernoteListener)
