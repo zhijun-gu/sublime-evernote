@@ -64,6 +64,15 @@ The plugin does not install keymaps, if you wish you may add a variation of the 
 { "keys": ["ctrl+e", "ctrl+u"], "command": "save_evernote_note" },
 ```
 
+you can also overwrite the standard "save" bindings for Evernote notes as follows:
+
+```
+{ "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}] },
+{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "selector", "operator": "equal", "operand": "text.html.markdown.evernote"}] },
+```
+
+you would still be able to save the note as a file by using the `File > Save` menu. 
+
 You can also restrict your bindings to views showing Evernote notes by adding
 
     "context": [{"key": "evernote_note"}]
@@ -174,9 +183,15 @@ Setting                   | Purpose
 
 # Acknowledgements
 
- * Current maintainer and new features:
-   [bordaigorl](https://github.com/bordaigorl)
-   If you would like to contribute, please see [CONTRIBUTING].
+The current maintainer is [bordaigorl].
+
+If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gittip](https://www.gittip.com/bordaigorl/).
+
+If you would like to contribute, please see [CONTRIBUTING].
+
+The plugin has been made possible by the contribution of several people:
+
+ * Current maintainer and new features: [bordaigorl]
  * Original ST2 Plugin:
    [jamiesun](https://github.com/jamiesun/SublimeEvernote)
  * Port to ST3:
@@ -188,6 +203,8 @@ Setting                   | Purpose
    [dimfeld](https://github.com/dimfeld) and
    [paki](https://github.com/paki).
 
+If you think your name should be here, let us know!
+
 Libraries (some adapted to work with Evernote formats):
 
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
@@ -197,3 +214,4 @@ Libraries (some adapted to work with Evernote formats):
 
 [CONTRIBUTING]: <CONTRIBUTING.md>
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
+[bordaigorl]: <https://github.com/bordaigorl>
