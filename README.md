@@ -21,6 +21,10 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.5.1**
+
+ + Bugfix: metadata autocomplete now loads settings correctly 
+
 **v2.5.0**
 
  + [Search note](#search-note) command added
