@@ -9,7 +9,7 @@
         "blockquote": "border-left: .5ex solid #BFBFBF; margin-left: 0px; padding-left: 1em; margin-top: 1.4285em; margin-bottom: 1.4285em;"
     },
     "code_highlighting_style": "github",
-    "code_friendly": false,
+    "code_friendly": true,
     "notes_order": "updated",
     "evernote_autocomplete": true
 }
