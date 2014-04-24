@@ -72,7 +72,7 @@ you can also overwrite the standard "save" bindings for Evernote notes as follow
 
 ```
 { "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}] },
-{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "selector", "operator": "equal", "operand": "text.html.markdown.evernote"}] },
+{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "evernote_note", "operator": "equal", "operand": false}, {"key": "selector", "operator": "equal", "operand": "text.html.markdown.evernote"}] },
 ```
 
 you would still be able to save the note as a file by using the `File > Save` menu. 
