@@ -865,11 +865,16 @@ class Markdown(object):
             row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
             rows.append(row)
         #pprint(rows)
-        hlines = ['<table>', '<tbody>']
-        for row in rows:
-            hrow = ['<tr>']
+        table_style = self._html_class_str_from_tag("table")
+        td_style =  self._html_class_str_from_tag("td")
+        tr_style =  self._html_class_str_from_tag("tr")
+        tr_odd_style =  self._html_class_str_from_tag("tr:odd")
+        tr_even_style =  self._html_class_str_from_tag("tr:even")
+        hlines = ['<table%s>' % table_style, '<tbody>']
+        for i, row in enumerate(rows):
+            hrow = ['<tr%s%s>' % (tr_style, tr_even_style if i % 2 else tr_odd_style)]
             for cell in row:
-                hrow.append('<td>')
+                hrow.append('<td%s>' % td_style)
                 hrow.append(self._run_span_gamut(cell))
                 hrow.append('</td>')
             hrow.append('</tr>')

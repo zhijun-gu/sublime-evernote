@@ -6,7 +6,12 @@
         "footnotes": "border-top: 1px solid #9AB39B; font-size: 80%;",
         "hr": "color:#9AB39B;background-color:#9AB39B;height:1px;border:none;",
         "sup": "color:#6D6D6D;font-size:1ex",
-        "blockquote": "border-left: .5ex solid #BFBFBF; margin-left: 0px; padding-left: 1em; margin-top: 1.4285em; margin-bottom: 1.4285em;"
+        "blockquote": "border-left: .5ex solid #BFBFBF; margin-left: 0px; padding-left: 1em; margin-top: 1.4285em; margin-bottom: 1.4285em;",
+        // ONLY USED IF wiki_tables = true
+        "table": "border-collapse: collapse; border-spacing: 0; margin: 1em;",
+        "td": "border: 1px solid #DDD; padding: 6px 13px;",
+        "tr:odd": "border: 1px solid #DDD; padding: 6px 13px;",
+        "tr:even": "border: 1px solid #DDD; padding: 6px 13px; background-color: #F8F8F8;"
     },
     "code_highlighting_style": "github",
     "code_friendly": true,

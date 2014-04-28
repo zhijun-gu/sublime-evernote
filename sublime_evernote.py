@@ -148,6 +148,8 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
         if self.settings.get("code_friendly"):
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
+        if self.settings.get("wiki_tables"):
+            EvernoteDo.MD_EXTRAS['wiki-tables'] = None
         css = self.settings.get("inline_css")
         if css is not None:
             EvernoteDo.MD_EXTRAS['inline-css'] = css
