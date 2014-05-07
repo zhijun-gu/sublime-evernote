@@ -174,6 +174,8 @@ class EvernoteDo():
         self.message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
+            if noteStoreUrl.startswith("https://"):
+                noteStoreUrl = "http://" + noteStoreUrl[8:]
             self.settings.set("token", token)
             self.settings.set("noteStoreUrl", noteStoreUrl)
             sublime.save_settings(EVERNOTE_SETTINGS)
@@ -189,17 +191,21 @@ class EvernoteDo():
             noteStoreUrl = self.settings.get("noteStoreUrl")
             if not noteStoreUrl:
                 noteStoreUrl = __derive_note_store_url(token)
-            __connect(token, noteStoreUrl)
+                p = self.window.show_input_panel(
+                    "NoteStore URL (required):", noteStoreUrl,
+                    lambda x: __connect(token, x),
+                    None, None)
+                p.sel().add(sublime.Region(0, p.size()))
+            else:
+                __connect(token, noteStoreUrl)
 
         token = self.token()
-        if token:
-            noteStoreUrl = self.settings.get("noteStoreUrl")
-            if not noteStoreUrl:
-                noteStoreUrl = __derive_note_store_url(token)
-                __connect(token, noteStoreUrl)
-        else:
+        noteStoreUrl = self.settings.get("noteStoreUrl")
+        if not token or not noteStoreUrl:
             webbrowser.open_new_tab("https://www.evernote.com/api/DeveloperToken.action")
-            self.window.show_input_panel("Developer Token (required):", "", on_token, None, None)
+            self.window.show_input_panel(
+                "Developer Token (required):", token or "",
+                on_token, None, None)
 
     def get_note_store(self):
         if EvernoteDo._noteStore:
@@ -715,6 +721,7 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
         self.window = sublime.active_window()
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
         self.settings.erase("token")
+        self.settings.erase("noteStoreUrl")
         self.clear_cache()
         self.connect(lambda: True)
 
