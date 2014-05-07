@@ -672,9 +672,10 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
 
 class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
+
     def run(self, edit):
         url = self.view.settings().get("noteStoreUrl")[0:-9] + "view/%s"
-        self.view.window().run_command("open_url", {"url": url % self.view.settings().get("$evernote_guid")})
+        webbrowser.open_new_tab(url % self.view.settings().get("$evernote_guid"))
 
     def is_enabled(self):
         if self.view.settings().get("$evernote_guid", False):
