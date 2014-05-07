@@ -30,7 +30,7 @@ import webbrowser
 import markdown2
 import html2text
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from base64 import b64encode, b64decode
 
@@ -66,6 +66,8 @@ notebook: %s
 ---
 
 """
+
+
 def metadata_header(title="", tags=[], notebook="", **kw):
     return METADATA_HEADER % (title, json.dumps(tags, ensure_ascii=False), notebook)
 
@@ -500,7 +502,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
     def do_run(self, note_guid=None, by_searching=None,
                from_notebook=None, with_tags=None,
                order=None, ascending=None, **kwargs):
-        noteStore = self.get_note_store()
         notebooks = self.get_notebooks()
 
         search_args = {}
