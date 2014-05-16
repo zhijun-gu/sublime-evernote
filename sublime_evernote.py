@@ -93,8 +93,10 @@ def language_name(scope):
         if s.startswith("source."):
             return names[1]
         elif s.startswith("text."):
-            if "markdown" in names:
+            if "markdown" in names:  # deal with plugins for MD
                 return "markdown"
+            elif "latex" in names:  # deal with plugins for LaTeX
+                return "latex"
             elif names[1] == "plain":
                 return ""
             else:
