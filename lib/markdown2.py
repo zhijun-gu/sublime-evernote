@@ -1552,8 +1552,8 @@ class Markdown(object):
 
         if lexer_name:
             lexer = self._get_pygments_lexer(lexer_name)
-            setattr(lexer, 'orig_name', lexer_name)
             if lexer:
+                setattr(lexer, 'orig_name', lexer_name)
                 colored = self._color_with_pygments(codeblock, lexer,
                                                     **formatter_opts)
                 return "\n\n%s\n\n" % colored
