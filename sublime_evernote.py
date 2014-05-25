@@ -638,18 +638,35 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
 class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
-    def open_note(self, guid, insert_in_content=True, **unk_args):
+    def open_note(self, guid, insert_in_content=True, filename=None, prompt=False, **unk_args):
         import hashlib, mimetypes
-        view = self.window.active_view()
-        filename = view.file_name() or ""
-        if view is None:
-            self.message("You need to open the file to be attached first!")
-            return
-        contents = view.substr(sublime.Region(0, view.size())).encode('utf8')
+        if filename is None:
+            view = self.window.active_view()
+            if view is None:
+                sublime.error_message("Evernote plugin could not open the file you specified!")
+                return
+            filename = view.file_name() or ""
+            contents = view.substr(sublime.Region(0, view.size())).encode('utf8')
+        else:
+            filename = os.path.abspath(filename)
+            if prompt:
+                self.window.show_input_panel(
+                    "Filename of attachment: ", filename,
+                    lambda x: self.open_note(guid, insert_in_content, filename, prompt=False, **unk_args),
+                    None, None)
+                return
+            try:
+                with open(filename, 'rb') as content_file:
+                    contents = content_file.read()
+            except Exception as e:
+                sublime.error_message("Evernote plugin could not open the file you specified!")
+                print(e)
+                return
         try:
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
-            mime = mimetypes.guess_type(filename)
+            mime = mimetypes.guess_type(filename)[0]
+            LOG(mime)
             h = hashlib.md5(contents)
             if not isinstance(mime, str):
                 mime = "text/plain"
@@ -678,6 +695,9 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
             sublime.error_message("The note with the specified guid could not be found.")
         except Errors.EDAMUserException:
             sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
+
+    def is_enabled(self, insert_in_content=True, filename=None, **unk):
+        return filename is not None or self.window.active_view() is not None
 
 
 class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
