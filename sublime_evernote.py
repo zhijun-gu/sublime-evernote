@@ -40,7 +40,7 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     def LOG(*args):
@@ -698,6 +698,32 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
         return filename is not None or self.window.active_view() is not None
+
+
+class EvernoteInsertAttachment(EvernoteDoText):
+    # TODO: prompt for a filename and attach the file
+    # inserting the en-media tag in the current position
+
+        def do_run(self, edit, filename=None, prompt=False):
+            pass
+
+        def is_enabled(self):
+            if self.view.settings().get("$evernote_guid", False):
+                return True
+            return False
+
+
+class EvernoteShowAttachments(EvernoteDoText):
+    # TODO: show quick panel with attachments
+    # when selected if text open in view, if image open preview, else os-open
+
+        def do_run(self, edit, filename=None, prompt=False):
+            pass
+
+        def is_enabled(self):
+            if self.view.settings().get("$evernote_guid", False):
+                return True
+            return False
 
 
 class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
