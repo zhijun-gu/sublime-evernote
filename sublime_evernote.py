@@ -703,11 +703,57 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
-    # TODO: prompt for a filename and attach the file
-    # inserting the en-media tag in the current position
 
-        def do_run(self, edit, filename=None, prompt=False):
-            pass
+        def do_run(self, edit, insert_in_content=True, filename=None, prompt=False):
+            import hashlib, mimetypes
+            view = self.view
+            if filename is None or prompt:
+                view.window().show_input_panel(
+                    "Filename or URL of attachment: ", filename or "",
+                    lambda x: view.run_command(
+                        "evernote_insert_attachment",
+                        {'insert_in_content': insert_in_content, "filename": x, "prompt": False}),
+                    None, None)
+                return
+            filename = filename.strip()
+            filecontents = None
+            attr = {}
+            if filename.startswith("http://") or \
+               filename.startswith("https://"):
+                # download
+                import urllib.request
+                response = urllib.request.urlopen(filename)
+                filecontents = response.read()
+                attr = {"sourceURL": filename}
+            else:
+                datafile = os.path.expanduser(filename)
+                if os.path.exists(datafile):
+                    with open(datafile, 'rb') as content_file:
+                        filecontents = content_file.read()
+                attr = {"fileName": os.path.basename(datafile)}
+
+            if filecontents is None:
+                sublime.error_message("The specified file/URL could not be found!")
+                return
+
+            guid = self.view.settings().get("$evernote_guid")
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, False, True, False, False)
+            mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+            h = hashlib.md5(filecontents)
+            attachment = Types.Resource(
+                # noteGuid=guid,
+                mime=mime,
+                data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
+                attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
+            resources = note.resources or []
+            resources.append(attachment)
+            self.message("Uploading attachment...")
+            noteStore.updateNote(self.token(), note)
+            if insert_in_content:
+                view.insert(edit, view.sel()[0].a,
+                            '<en-media type="%s" hash="%s"/>' % (h.hexdigest(), mime))
+                sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
