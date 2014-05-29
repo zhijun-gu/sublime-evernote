@@ -784,23 +784,23 @@ class EvernoteShowAttachments(EvernoteDoText):
             def on_done(i):
                 if i >= 0:
                     import tempfile
-                    # try:
-                    contents = noteStore.getResource(
-                        self.token(), note.resources[i].guid,
-                        True, False, False, False).data.body
-                    mime = (note.resources[i].mime or "application/octet-stream").split("/")[0]
-                    _, tmp = tempfile.mkstemp(resources[i])
-                    with open(tmp, 'wb') as tmpf:
-                        tmpf.write(contents)
-                    if mime in ["text", "image"]:
-                        aview = self.view.window().open_file(tmp)
-                        aview.set_read_only(True)
-                        aview.set_scratch(True)
-                        aview.set_name(resources[i])
-                    else:
-                        open_file_with_app(tmp)
-                    # except:
-                    #     sublime.error_message("Unable to fetch the attachment.")
+                    try:
+                        contents = noteStore.getResource(
+                            self.token(), note.resources[i].guid,
+                            True, False, False, False).data.body
+                        mime = (note.resources[i].mime or "application/octet-stream").split("/")[0]
+                        _, tmp = tempfile.mkstemp(resources[i])
+                        with open(tmp, 'wb') as tmpf:
+                            tmpf.write(contents)
+                        if mime in ["text", "image"]:
+                            aview = self.view.window().open_file(tmp)
+                            aview.set_read_only(True)
+                            aview.set_scratch(True)
+                            aview.set_name(resources[i])
+                        else:
+                            open_file_with_app(tmp)
+                    except:
+                        sublime.error_message("Unable to fetch the attachment.")
 
             self.view.window().show_quick_panel(resources, on_done)
 
