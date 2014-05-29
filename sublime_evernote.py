@@ -697,8 +697,6 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
             sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
-        if self.view.settings().get("$evernote_guid", False):
-            return False
         return filename is not None or self.window.active_view() is not None
 
 
