@@ -715,12 +715,48 @@ class EvernoteInsertAttachment(EvernoteDoText):
             return False
 
 
+def open_file_with_app(filepath):
+    import subprocess
+    if sublime.platform() == "osx":
+        subprocess.call(('open', filepath))
+    elif sublime.platform() == "windows":
+        os.startfile(filepath)
+    elif sublime.platform() == "linux":
+        subprocess.call(('xdg-open', filepath))
+
+
 class EvernoteShowAttachments(EvernoteDoText):
     # TODO: show quick panel with attachments
     # when selected if text open in view, if image open preview, else os-open
 
         def do_run(self, edit, filename=None, prompt=False):
-            pass
+            guid = self.view.settings().get("$evernote_guid")
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, True, False, False, False)
+            resources = [r.attributes.fileName or r.attributes.sourceURL for r in note.resources]
+
+            def on_done(i):
+                if i >= 0:
+                    import tempfile
+                    # try:
+                    contents = noteStore.getResource(
+                        self.token(), note.resources[i].guid,
+                        True, False, False, False).data.body
+                    mime = (note.resources[i].mime or "application/octet-stream").split("/")[0]
+                    _, tmp = tempfile.mkstemp(resources[i])
+                    with open(tmp, 'wb') as tmpf:
+                        tmpf.write(contents)
+                    if mime in ["text", "image"]:
+                        aview = self.view.window().open_file(tmp)
+                        aview.set_read_only(True)
+                        aview.set_scratch(True)
+                        aview.set_name(resources[i])
+                    else:
+                        open_file_with_app(tmp)
+                    # except:
+                    #     sublime.error_message("Unable to fetch the attachment.")
+
+            self.view.window().show_quick_panel(resources, on_done)
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
