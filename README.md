@@ -21,6 +21,12 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.5.2** (not yet released)
+
+ + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
+ + Now notes in webapp are opened in default browser (solves #22)
+ + Configuration asks for noteStoreUrl so the plugin works properly for yinxiang.com (solves #20)
+
 **v2.5.1**
 
  + Bugfix: metadata autocomplete now loads settings correctly 
@@ -44,7 +50,7 @@ See the [wiki] for detailed instructions.
 
 ## First use
 
-When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the token data in `Sublime Text 3/Packages/User/SublimeEvernote.sublime-settings`.
+When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window. Sublime will store the authentication data in `Sublime Text 3/Packages/User/Evernote.sublime-settings`.
 
 If you need to reconfigure the plugin go to `Preferences > Package Settings > Evernote` and select `Reconfigure Authorisation` or go to
 
@@ -204,8 +210,10 @@ The plugin has been made possible by the contribution of several people:
  * Other contributors:
    [mwcraig](https://github.com/mwcraig),
    [rayou](https://github.com/rayou),
-   [dimfeld](https://github.com/dimfeld) and
-   [paki](https://github.com/paki).
+   [dimfeld](https://github.com/dimfeld),
+   [paki](https://github.com/paki),
+   [zsytssk](https://github.com/zsytssk) and
+   [metalbrick](https://github.com/metalbrick),
 
 If you think your name should be here, let us know!
 
