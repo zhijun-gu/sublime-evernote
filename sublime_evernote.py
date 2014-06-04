@@ -687,7 +687,7 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
                 else:
                     content = note.content
                 note.content = content[0:-10] + \
-                    '<en-media hash="%s" type="%s"/></en-note>' % (h.hexdigest(), mime)
+                    '<en-media type="%s" hash="%s"/></en-note>' % (mime, h.hexdigest())
             note.resources = resources
             noteStore.updateNote(self.token(), note)
             self.message("Succesfully attached to note '%s'" % note.title)
@@ -750,7 +750,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
             noteStore.updateNote(self.token(), note)
             if insert_in_content:
                 view.insert(edit, view.sel()[0].a,
-                            '<en-media type="%s" hash="%s"/>' % (h.hexdigest(), mime))
+                            '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
                 sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
 
         def is_enabled(self):
