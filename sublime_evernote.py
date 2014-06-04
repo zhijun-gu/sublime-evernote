@@ -770,8 +770,6 @@ def open_file_with_app(filepath):
 
 
 class EvernoteShowAttachments(EvernoteDoText):
-    # TODO: show quick panel with attachments
-    # when selected if text open in view, if image open preview, else os-open
 
         def do_run(self, edit, filename=None, prompt=False):
             guid = self.view.settings().get("$evernote_guid")
@@ -780,6 +778,9 @@ class EvernoteShowAttachments(EvernoteDoText):
             resources = [r.attributes.fileName or r.attributes.sourceURL for r in note.resources]
 
             def on_done(i):
+                sublime.set_timeout_async(lambda: on_done2(i), 10)
+
+            def on_done2(i):
                 if i >= 0:
                     import tempfile
                     try:
