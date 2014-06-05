@@ -171,6 +171,8 @@ class EvernoteDo():
         info = "Note created %s, updated %s, %s attachments" % (
             datestr(note.created), datestr(note.updated), len(note.resources or []))
         view.set_status("Evernote-info", info)
+        if view.file_name() is None and note.title is not None:
+            view.set_name(note.title)
 
     def connect(self, callback, **kwargs):
         self.message("initializing..., please wait...")
@@ -450,8 +452,6 @@ class SendToEvernoteCommand(EvernoteDoText):
                     view.settings().set("$evernote_guid", cnote.guid)
                     view.settings().set("$evernote_title", cnote.title)
                     view.set_syntax_file(self.md_syntax)
-                    if view.file_name() is None:
-                        view.set_name(cnote.title)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
                 self.update_status_info(cnote)
             except Errors.EDAMUserException as e:
@@ -592,7 +592,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             nb_name = self.notebook_from_guid(note.notebookGuid).name
             newview = self.window.new_file()
             newview.set_scratch(True)
-            newview.set_name(note.title)
             LOG(note.content)
             LOG(note.guid)
             if convert:
