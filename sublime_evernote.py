@@ -19,7 +19,7 @@ if lib_path not in sys.path:
 import evernote.edam.type.ttypes as Types
 from evernote.edam.error.ttypes import EDAMErrorCode, EDAMUserException, EDAMSystemException, EDAMNotFoundException
 
-# import evernote.edam.userstore.UserStore as UserStore
+import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.notestore.NoteStore as NoteStore
 import thrift.protocol.TBinaryProtocol as TBinaryProtocol
 import thrift.transport.THttpClient as THttpClient
@@ -193,6 +193,7 @@ def explain_error(err):
 class EvernoteDo():
 
     _noteStore = None
+    _userStore = None
 
     _notebook_by_guid = None
     _notebook_by_name = None
@@ -288,6 +289,18 @@ class EvernoteDo():
         noteStore = NoteStore.Client(noteStoreProtocol)
         EvernoteDo._noteStore = noteStore
         return noteStore
+
+    def get_user_store(self):
+        if EvernoteDo._noteStore:
+            return EvernoteDo._noteStore
+        # TODO: parametrise all urls wrt domain
+        userStoreUrl = "http://www.evernote.com/edam/user"
+        userStoreHttpClient = THttpClient.THttpClient(userStoreUrl)
+        userStoreHttpClient.setCustomHeaders(USER_AGENT)
+        userStoreProtocol = TBinaryProtocol.TBinaryProtocol(userStoreHttpClient)
+        userStore = UserStore.Client(userStoreProtocol)
+        EvernoteDo._userStore = userStore
+        return userStore
 
     def get_notebooks(self):
         if EvernoteDo._notebooks_cache:
