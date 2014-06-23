@@ -736,7 +736,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
 
             guid = self.view.settings().get("$evernote_guid")
             noteStore = self.get_note_store()
-            note = noteStore.getNote(self.token(), guid, False, True, False, False)
+            note = noteStore.getNote(self.token(), guid, False, False, False, False)
             mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
             h = hashlib.md5(filecontents)
             attachment = Types.Resource(
@@ -746,6 +746,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
                 attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
             resources = note.resources or []
             resources.append(attachment)
+            note.resources = resources
             self.message("Uploading attachment...")
             noteStore.updateNote(self.token(), note)
             if insert_in_content:
@@ -775,7 +776,7 @@ class EvernoteShowAttachments(EvernoteDoText):
             guid = self.view.settings().get("$evernote_guid")
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
-            resources = [r.attributes.fileName or r.attributes.sourceURL for r in note.resources]
+            resources = [r.attributes.fileName or r.attributes.sourceURL for r in note.resources or []]
 
             def on_done(i):
                 sublime.set_timeout_async(lambda: on_done2(i), 10)
