@@ -770,13 +770,20 @@ def open_file_with_app(filepath):
         subprocess.call(('xdg-open', filepath))
 
 
+def hashstr(h):
+    return ''.join(["%x" % b for b in h])
+
+
 class EvernoteShowAttachments(EvernoteDoText):
 
         def do_run(self, edit, filename=None, prompt=False):
             guid = self.view.settings().get("$evernote_guid")
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
-            resources = [r.attributes.fileName or r.attributes.sourceURL for r in note.resources or []]
+            resources = note.resources or []
+            menu = [[r.attributes.fileName or r.attributes.sourceURL,
+                     "hash: %s" % hashstr(r.data.bodyHash)]
+                    for r in resources]
 
             def on_done(i):
                 sublime.set_timeout_async(lambda: on_done2(i), 10)
@@ -788,7 +795,7 @@ class EvernoteShowAttachments(EvernoteDoText):
                         contents = noteStore.getResource(
                             self.token(), note.resources[i].guid,
                             True, False, False, False).data.body
-                        mime = note.resources[i].mime or "application/octet-stream"
+                        mime = resources[i].mime or "application/octet-stream"
                         _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
                         mime = mime.split("/")[0]
                         with open(tmp, 'wb') as tmpf:
@@ -797,15 +804,15 @@ class EvernoteShowAttachments(EvernoteDoText):
                             aview = self.view.window().open_file(tmp)
                             aview.set_read_only(True)
                             aview.set_scratch(True)
-                            aview.set_name(resources[i])
+                            aview.set_name(menu[i])
                         else:
                             open_file_with_app(tmp)
                     except Exception as e:
                         sublime.error_message("Unable to fetch the attachment.")
                         print(e)
 
-            if resources:
-                self.view.window().show_quick_panel(resources, on_done)
+            if menu:
+                self.view.window().show_quick_panel(menu, on_done)
             else:
                 self.message("Note has no attachments")
 
