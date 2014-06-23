@@ -783,13 +783,14 @@ class EvernoteShowAttachments(EvernoteDoText):
 
             def on_done2(i):
                 if i >= 0:
-                    import tempfile
+                    import tempfile, mimetypes
                     try:
                         contents = noteStore.getResource(
                             self.token(), note.resources[i].guid,
                             True, False, False, False).data.body
-                        mime = (note.resources[i].mime or "application/octet-stream").split("/")[0]
-                        _, tmp = tempfile.mkstemp(resources[i])
+                        mime = note.resources[i].mime or "application/octet-stream"
+                        _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
+                        mime = mime.split("/")[0]
                         with open(tmp, 'wb') as tmpf:
                             tmpf.write(contents)
                         if mime in ["text", "image"]:
@@ -799,10 +800,14 @@ class EvernoteShowAttachments(EvernoteDoText):
                             aview.set_name(resources[i])
                         else:
                             open_file_with_app(tmp)
-                    except:
+                    except Exception as e:
                         sublime.error_message("Unable to fetch the attachment.")
+                        print(e)
 
-            self.view.window().show_quick_panel(resources, on_done)
+            if resources:
+                self.view.window().show_quick_panel(resources, on_done)
+            else:
+                self.message("Note has no attachments")
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
