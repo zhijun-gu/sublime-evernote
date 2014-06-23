@@ -509,13 +509,13 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
     def do_run(self, note_guid=None, by_searching=None,
                from_notebook=None, with_tags=None,
-               order=None, ascending=None, **kwargs):
+               order=None, ascending=None, max_notes=None, **kwargs):
         notebooks = self.get_notebooks()
 
         search_args = {}
 
         order = order or self.settings.get("notes_order", "default").upper()
-        search_args['order'] = Types.NoteSortOrder._NAMES_TO_VALUES.get(order)  # None = default
+        search_args['order'] = Types.NoteSortOrder._NAMES_TO_VALUES.get(order.upper())  # None = default
         search_args['ascending'] = ascending or self.settings.get("notes_order_ascending", False)
 
         if from_notebook:
@@ -544,7 +544,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 self.message('Retrieving note "%s"...' % notes[i].title)
                 self.open_note(notes[i].guid, **kwargs)
             if show_notebook:
-                menu = [self.notebook_from_guid(note.notebookGuid).name + ": " + note.title for note in notes]
+                menu = ["[%s] ▸ %s" % (self.notebook_from_guid(note.notebookGuid).name, note.title) for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
             else:
                 menu = [note.title for note in notes]
@@ -554,13 +554,13 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             if notebook < 0:
                 return
             search_args['notebookGuid'] = notebooks[notebook].guid
-            notes = self.find_notes(search_args)
+            notes = self.find_notes(search_args, max_notes)
             sublime.set_timeout(lambda: notes_panel(notes), 0)
 
         def do_search(query):
             self.message("Searching notes...")
             search_args['words'] = query
-            notes_panel(self.find_notes(search_args), True)
+            notes_panel(self.find_notes(search_args, max_notes), True)
 
         if note_guid:
             self.open_note(note_guid, **kwargs)
@@ -574,15 +574,15 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             return
 
         if from_notebook or with_tags:
-            notes_panel(self.find_notes(search_args), not from_notebook)
+            notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
         else:
             self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
 
-    def find_notes(self, search_args):
+    def find_notes(self, search_args, max_notes=None):
         return self.get_note_store().findNotesMetadata(
             self.token(),
             NoteStore.NoteFilter(**search_args),
-            None, self.settings.get("max_notes", 100),
+            None, max_notes or self.settings.get("max_notes", 100),
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
