@@ -576,7 +576,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
         if from_notebook or with_tags:
             notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
         else:
-            self.window.show_quick_panel([notebook.name for notebook in notebooks], on_notebook)
+            nbnames = [nb.stack + ' - ' + nb.name if nb.stack else nb.name for nb in notebooks]
+            self.window.show_quick_panel(nbnames, on_notebook)
 
     def find_notes(self, search_args, max_notes=None):
         return self.get_note_store().findNotesMetadata(
