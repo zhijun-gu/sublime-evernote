@@ -40,7 +40,7 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     def LOG(*args):
@@ -692,7 +692,7 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
                 else:
                     content = note.content
                 note.content = content[0:-10] + \
-                    '<en-media hash="%s" type="%s"/></en-note>' % (h.hexdigest(), mime)
+                    '<en-media type="%s" hash="%s"/></en-note>' % (mime, h.hexdigest())
             note.resources = resources
             noteStore.updateNote(self.token(), note)
             self.message("Succesfully attached to note '%s'" % note.title)
@@ -703,6 +703,128 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
         return filename is not None or self.window.active_view() is not None
+
+
+class EvernoteInsertAttachment(EvernoteDoText):
+
+        def do_run(self, edit, insert_in_content=True, filename=None, prompt=False):
+            import hashlib, mimetypes
+            view = self.view
+            if filename is None or prompt:
+                view.window().show_input_panel(
+                    "Filename or URL of attachment: ", filename or "",
+                    lambda x: view.run_command(
+                        "evernote_insert_attachment",
+                        {'insert_in_content': insert_in_content, "filename": x, "prompt": False}),
+                    None, None)
+                return
+            filename = filename.strip()
+            filecontents = None
+            attr = {}
+            if filename.startswith("http://") or \
+               filename.startswith("https://"):
+                # download
+                import urllib.request
+                response = urllib.request.urlopen(filename)
+                filecontents = response.read()
+                attr = {"sourceURL": filename}
+            else:
+                datafile = os.path.expanduser(filename)
+                if os.path.exists(datafile):
+                    with open(datafile, 'rb') as content_file:
+                        filecontents = content_file.read()
+                attr = {"fileName": os.path.basename(datafile)}
+
+            if filecontents is None:
+                sublime.error_message("The specified file/URL could not be found!")
+                return
+
+            guid = self.view.settings().get("$evernote_guid")
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, False, False, False, False)
+            mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+            h = hashlib.md5(filecontents)
+            attachment = Types.Resource(
+                # noteGuid=guid,
+                mime=mime,
+                data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
+                attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
+            resources = note.resources or []
+            resources.append(attachment)
+            note.resources = resources
+            self.message("Uploading attachment...")
+            noteStore.updateNote(self.token(), note)
+            if insert_in_content:
+                view.insert(edit, view.sel()[0].a,
+                            '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
+                sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
+
+        def is_enabled(self):
+            if self.view.settings().get("$evernote_guid", False):
+                return True
+            return False
+
+
+def open_file_with_app(filepath):
+    import subprocess
+    if sublime.platform() == "osx":
+        subprocess.call(('open', filepath))
+    elif sublime.platform() == "windows":
+        os.startfile(filepath)
+    elif sublime.platform() == "linux":
+        subprocess.call(('xdg-open', filepath))
+
+
+def hashstr(h):
+    return ''.join(["%x" % b for b in h])
+
+
+class EvernoteShowAttachments(EvernoteDoText):
+
+        def do_run(self, edit, filename=None, prompt=False):
+            guid = self.view.settings().get("$evernote_guid")
+            noteStore = self.get_note_store()
+            note = noteStore.getNote(self.token(), guid, True, False, False, False)
+            resources = note.resources or []
+            menu = [[r.attributes.fileName or r.attributes.sourceURL,
+                     "hash: %s" % hashstr(r.data.bodyHash)]
+                    for r in resources]
+
+            def on_done(i):
+                sublime.set_timeout_async(lambda: on_done2(i), 10)
+
+            def on_done2(i):
+                if i >= 0:
+                    import tempfile, mimetypes
+                    try:
+                        contents = noteStore.getResource(
+                            self.token(), note.resources[i].guid,
+                            True, False, False, False).data.body
+                        mime = resources[i].mime or "application/octet-stream"
+                        _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
+                        mime = mime.split("/")[0]
+                        with open(tmp, 'wb') as tmpf:
+                            tmpf.write(contents)
+                        if mime in ["text", "image"]:
+                            aview = self.view.window().open_file(tmp)
+                            aview.set_read_only(True)
+                            aview.set_scratch(True)
+                            aview.set_name(menu[i])
+                        else:
+                            open_file_with_app(tmp)
+                    except Exception as e:
+                        sublime.error_message("Unable to fetch the attachment.")
+                        print(e)
+
+            if menu:
+                self.view.window().show_quick_panel(menu, on_done)
+            else:
+                self.message("Note has no attachments")
+
+        def is_enabled(self):
+            if self.view.settings().get("$evernote_guid", False):
+                return True
+            return False
 
 
 class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
