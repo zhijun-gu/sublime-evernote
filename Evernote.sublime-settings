@@ -16,5 +16,7 @@
     "code_highlighting_style": "github",
     "code_friendly": true,
     "notes_order": "updated",
-    "evernote_autocomplete": true
+    "evernote_autocomplete": true,
+    "sort_notebooks": false,
+    "show_stacks": true
 }

@@ -544,7 +544,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 self.message('Retrieving note "%s"...' % notes[i].title)
                 self.open_note(notes[i].guid, **kwargs)
             if show_notebook:
-                menu = ["[%s] ▸ %s" % (self.notebook_from_guid(note.notebookGuid).name, note.title) for note in notes]
+                menu = ["[%s] » %s" % (self.notebook_from_guid(note.notebookGuid).name, note.title) for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
             else:
                 menu = [note.title for note in notes]
@@ -576,8 +576,13 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
         if from_notebook or with_tags:
             notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
         else:
-            nbnames = [nb.stack + ' - ' + nb.name if nb.stack else nb.name for nb in notebooks]
-            self.window.show_quick_panel(nbnames, on_notebook)
+            if self.settings.get("show_stacks", True):
+                menu = ["%s » %s" % (nb.stack, nb.name) if nb.stack else nb.name for nb in notebooks]
+            else:
+                menu = [nb.name for nb in notebooks]
+            if self.settings.get("sort_notebooks"):
+                menu.sort()
+            self.window.show_quick_panel(menu, on_notebook)
 
     def find_notes(self, search_args, max_notes=None):
         return self.get_note_store().findNotesMetadata(
