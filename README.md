@@ -23,6 +23,7 @@ See [Commands](#commands) and the [wiki] for details.
 
 **v2.5.2** (not yet released)
 
+ + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
  + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
  + Now notes in webapp are opened in default browser (solves #22)
  + Configuration asks for noteStoreUrl so the plugin works properly for yinxiang.com (solves #20)
@@ -189,6 +190,8 @@ Setting                   | Purpose
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
+`sort_notebooks`          | sorts notebooks alphabetically in pallette
+`show_stacks`             | shows the stack of notebooks in pallette
 
 
 # Acknowledgements
@@ -212,8 +215,9 @@ The plugin has been made possible by the contribution of several people:
    [rayou](https://github.com/rayou),
    [dimfeld](https://github.com/dimfeld),
    [paki](https://github.com/paki),
-   [zsytssk](https://github.com/zsytssk) and
+   [zsytssk](https://github.com/zsytssk),
    [metalbrick](https://github.com/metalbrick),
+   [danielfrg](https://github.com/danielfrg).
 
 If you think your name should be here, let us know!
 
