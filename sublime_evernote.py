@@ -808,8 +808,8 @@ class EvernoteShowAttachments(EvernoteDoText):
                         if mime in ["text", "image"]:
                             aview = self.view.window().open_file(tmp)
                             aview.set_read_only(True)
-                            aview.set_scratch(True)
-                            aview.set_name(menu[i])
+                            # aview.set_scratch(True)
+                            # aview.set_name(menu[i][0])
                         else:
                             open_file_with_app(tmp)
                     except Exception as e:

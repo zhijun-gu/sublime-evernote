@@ -13,7 +13,7 @@ To start using it install it from Package Control and type "Evernote" on the Com
  * **Open a note from Evernote**: shows panels to choose a note from a notebook, converts it to markdown and presents it in a view.
  * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
  * **Full two-way metadata support**: you can set and change the note's title, notebook and tag just by providing a YAML metadata header in your markdown source.
- * **Attach to note**: adds the currently opened file as an attachment to a note selected from a panel.
+ * **Attachments**: can insert, list and open attachments.
  * **Clip to note**: saves the current selection as code snippets to a new note.
 
 See [Commands](#commands) and the [wiki] for details.
@@ -23,6 +23,7 @@ See [Commands](#commands) and the [wiki] for details.
 
 **v2.5.2** (not yet released)
 
+ + Added attachments management: list, open, insert attachments from file or url (solves #24)
  + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
  + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
  + Now notes in webapp are opened in default browser (solves #22)
@@ -122,13 +123,25 @@ For more details about the parameters of this command see the [wiki].
 When the current view is associated with an Evernote note (maybe because you just sent it to Evernote or because it is an opened note) you can update the note with this command.
 The [metadata](#metadata) will be updated according to the metadata block and attachments stored in the original Evernote note will be left alone.
 
-### Attach to Note
+### Attachments
 
 `Command Palette` > `Evernote: Attach current file to a note`
 
-This will open a panel from which you can select a notebook and a note in it.
+This will open a pallette from which you can select a notebook and a note in it.
 The currently opened file will then be attached to the selected note.
 Existing attachments of the selected note will remain untouched.
+
+`Command Palette` > `Evernote: Insert Attachment Here`
+
+Asks for a path or URL and inserts it as an attachment to the current note.
+If an URL is provided, the file would be downloaded and uploaded to Evernote.
+**Please Note**: for the time being Sublime Text will freeze during the download/upload operation for large files. Just wait until the transfer is complete.
+
+`Command Palette` > `Evernote: Show Attachments`
+
+The command will open a pallette listing all the attachments of the current note.
+If one is selected it will be downloaded and displayed.
+The download will be done asynchronously as it may take some time for heavy files.
 
 ### Clip as new Note
 
