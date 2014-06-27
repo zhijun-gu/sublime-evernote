@@ -232,6 +232,8 @@ class EvernoteDo():
             self.message("Fetching notebooks, please wait...")
             notebooks = noteStore.listNotebooks(self.token())
             self.message("Fetched all notebooks!")
+            if self.settings.get("sort_notebooks"):
+                notebooks.sort(key=lambda nb: nb.name)
         except Exception as e:
             sublime.error_message('Error getting notebooks: %s' % e)
         EvernoteDo._notebook_by_name = dict([(nb.name, nb) for nb in notebooks])
@@ -580,8 +582,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 menu = ["%s » %s" % (nb.stack, nb.name) if nb.stack else nb.name for nb in notebooks]
             else:
                 menu = [nb.name for nb in notebooks]
-            if self.settings.get("sort_notebooks"):
-                menu.sort()
             self.window.show_quick_panel(menu, on_notebook)
 
     def find_notes(self, search_args, max_notes=None):
