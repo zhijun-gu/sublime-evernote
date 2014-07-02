@@ -17,12 +17,13 @@ if lib_path not in sys.path:
     sys.path.append(lib_path)
 
 import evernote.edam.type.ttypes as Types
-import evernote.edam.error.ttypes as Errors
+from evernote.edam.error.ttypes import EDAMErrorCode, EDAMUserException, EDAMSystemException, EDAMNotFoundException
 
 # import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.notestore.NoteStore as NoteStore
 import thrift.protocol.TBinaryProtocol as TBinaryProtocol
 import thrift.transport.THttpClient as THttpClient
+from socket import gaierror
 
 import sublime
 import sublime_plugin
@@ -121,6 +122,72 @@ def datestr(d):
     elif delta.days == 2:
         return "2 days ago"
     return d.strftime("on %d/%m/%y")
+
+
+ecode = EDAMErrorCode
+error_groups = {
+        'server': ('Internal server error', [ecode.UNKNOWN, ecode.INTERNAL_ERROR, ecode.SHARD_UNAVAILABLE, ecode.UNSUPPORTED_OPERATION ]),
+        'data': ('User supplied data is invalid or conflicting', [ecode.BAD_DATA_FORMAT, ecode.DATA_REQUIRED, ecode.DATA_CONFLICT, ecode.LEN_TOO_SHORT, ecode.LEN_TOO_LONG, ecode.TOO_FEW, ecode.TOO_MANY]),
+        'permission': ('Action not allowed, permission denied or limits exceeded', [ecode.PERMISSION_DENIED, ecode.LIMIT_REACHED, ecode.QUOTA_REACHED, ecode.TAKEN_DOWN, ecode.RATE_LIMIT_REACHED]),
+        'auth': ('Authorisation error, consider re-configuring the plugin', [ecode.INVALID_AUTH, ecode.AUTH_EXPIRED]),
+        'contents': ('Illegal note contents', [ecode.ENML_VALIDATION])
+    }
+
+
+def errcode2name(err):
+    name = ecode._VALUES_TO_NAMES.get(err.errorCode, "UNKNOWN")
+    name = name.replace("_", " ").capitalize()
+    return name
+
+
+def err_reason(err):
+    for reason, group in error_groups.values():
+        if err.errorCode in group:
+            return reason
+    return "Unknown reason"
+
+
+def explain_error(err):
+    if isinstance(err, EDAMUserException):
+        print("Evernote error: [%s] %s" % (errcode2name(err), err.parameter))
+        if err.errorCode in error_groups["contents"][1]:
+            explanation = "The contents of the note are not valid.\n"
+            msg = err.parameter.split('"')
+            what = msg[0].strip().lower()
+            if what == "element type":
+                return explanation +\
+                    "The inline HTML tag '%s' is not allowed in Evernote notes." %\
+                    msg[1]
+            elif what == "attribute":
+                if msg[1] == "class":
+                    return explanation +\
+                        "The note contains a '%s' HTML tag "\
+                        "with a 'class' attribute; this is not allowed in a note.\n"\
+                        "Please use inline 'style' attributes or customise "\
+                        "the 'inline_css' setting." %\
+                        msg[3]
+                else:
+                    return explanation +\
+                        "The note contains a '%s' HTML tag"\
+                        " with a '%s' attribute; this is not allowed in a note." %\
+                    msg[3], msg[1]
+            return explanation + err.parameter
+        else:
+            return err_reason(err)
+    elif isinstance(err, EDAMSystemException):
+        print("Evernote error: [%s] %s" % (errcode2name(err), err.message))
+        return "Evernote cannot perform the requested action:\n" + err_reason(err)
+    elif isinstance(err, EDAMNotFoundException):
+        print("Evernote error: [%s = %s] Not found" % (err.identifier, err.key))
+        return "Cannot find %s" % err.identifier.split('.', 1)[0]
+    elif isinstance(err, gaierror):
+        print("Evernote error: [socket] %s" % str(err))
+        return 'The Evernote services seem unreachable.\n'\
+               'Please check your connection and retry.'
+    else:
+        print("Evernote plugin error: %s" % str(err))
+        return 'Evernote plugin error, please contact developer at\n'\
+               'https://github.com/bordaigorl/sublime-evernote/issues'
 
 
 class EvernoteDo():
@@ -235,7 +302,9 @@ class EvernoteDo():
             if self.settings.get("sort_notebooks"):
                 notebooks.sort(key=lambda nb: nb.name)
         except Exception as e:
-            sublime.error_message('Error getting notebooks: %s' % e)
+            sublime.error_message(explain_error(e))
+            LOG(e)
+            return []
         EvernoteDo._notebook_by_name = dict([(nb.name, nb) for nb in notebooks])
         EvernoteDo._notebook_by_guid = dict([(nb.guid, nb) for nb in notebooks])
         EvernoteDo._notebooks_cache = notebooks
@@ -456,15 +525,17 @@ class SendToEvernoteCommand(EvernoteDoText):
                     view.set_syntax_file(self.md_syntax)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
                 self.update_status_info(cnote)
-            except Errors.EDAMUserException as e:
+            except EDAMUserException as e:
                 args = dict(title=note.title, notebookGuid=note.notebookGuid, tags=note.tagNames)
                 if e.errorCode == 9:
                     self.connect(self.do_send, **args)
                 else:
-                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % e.parameter):
+                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(err)):
                         self.connect(self.do_send, **args)
+            except EDAMSystemException as e:
+                sublime.error_message('Evernote error:\n%s' % explain_error(err))
             except Exception as e:
-                sublime.error_message('Error %s' % e)
+                sublime.error_message('Evernote plugin error %s' % e)
 
         choose_title()
 
@@ -490,14 +561,9 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 self.view.settings().set("$evernote_title", cnote.title)
                 self.message("Successfully updated note: guid:%s" % cnote.guid)
                 self.update_status_info(cnote)
-            except Errors.EDAMUserException as e:
-                if e.errorCode == 9:
-                    self.connect(self.__update_note)
-                else:
-                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % e.parameter):
-                        self.connect(self.__update_note)
             except Exception as e:
-                sublime.error_message('Error %s' % e)
+                if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
+                    self.connect(self.__update_note)
 
         __update_note()
 
@@ -635,10 +701,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
-        except Errors.EDAMNotFoundException as e:
-            sublime.error_message("The note with the specified guid could not be found.")
-        except Errors.EDAMUserException:
-            sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
+        except Exception as e:
+            sublime.error_message(explain_error(e))
 
 
 class AttachToEvernoteNote(OpenEvernoteNoteCommand):
@@ -695,11 +759,9 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
                     '<en-media type="%s" hash="%s"/></en-note>' % (mime, h.hexdigest())
             note.resources = resources
             noteStore.updateNote(self.token(), note)
-            self.message("Succesfully attached to note '%s'" % note.title)
-        except Errors.EDAMNotFoundException as e:
-            sublime.error_message("The note with the specified guid could not be found.")
-        except Errors.EDAMUserException:
-            sublime.error_message("The specified note could not be found.\nPlease check the guid is correct.")
+            self.message("Successfully attached to note '%s'" % note.title)
+        except Exception as e:
+            sublime.error_message(explain_error(e))
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
         return filename is not None or self.window.active_view() is not None
@@ -719,45 +781,50 @@ class EvernoteInsertAttachment(EvernoteDoText):
                     None, None)
                 return
             filename = filename.strip()
-            filecontents = None
             attr = {}
-            if filename.startswith("http://") or \
-               filename.startswith("https://"):
-                # download
-                import urllib.request
-                response = urllib.request.urlopen(filename)
-                filecontents = response.read()
-                attr = {"sourceURL": filename}
-            else:
-                datafile = os.path.expanduser(filename)
-                if os.path.exists(datafile):
+            try:
+                if filename.startswith("http://") or \
+                   filename.startswith("https://"):
+                    # download
+                    import urllib.request
+                    response = urllib.request.urlopen(filename)
+                    filecontents = response.read()
+                    attr = {"sourceURL": filename}
+                else:
+                    datafile = os.path.expanduser(filename)
                     with open(datafile, 'rb') as content_file:
                         filecontents = content_file.read()
-                attr = {"fileName": os.path.basename(datafile)}
-
-            if filecontents is None:
-                sublime.error_message("The specified file/URL could not be found!")
+                    attr = {"fileName": os.path.basename(datafile)}
+            except Exception as e:
+                sublime.error_message(
+                    "Evernote plugin has troubles locating the specified file/URL.\n" +
+                    explain_error(e))
                 return
 
-            guid = self.view.settings().get("$evernote_guid")
-            noteStore = self.get_note_store()
-            note = noteStore.getNote(self.token(), guid, False, False, False, False)
-            mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-            h = hashlib.md5(filecontents)
-            attachment = Types.Resource(
-                # noteGuid=guid,
-                mime=mime,
-                data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
-                attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
-            resources = note.resources or []
-            resources.append(attachment)
-            note.resources = resources
-            self.message("Uploading attachment...")
-            noteStore.updateNote(self.token(), note)
-            if insert_in_content:
-                view.insert(edit, view.sel()[0].a,
-                            '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
-                sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
+            try:
+                guid = self.view.settings().get("$evernote_guid")
+                noteStore = self.get_note_store()
+                note = noteStore.getNote(self.token(), guid, False, False, False, False)
+                mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+                h = hashlib.md5(filecontents)
+                attachment = Types.Resource(
+                    # noteGuid=guid,
+                    mime=mime,
+                    data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
+                    attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
+                resources = note.resources or []
+                resources.append(attachment)
+                note.resources = resources
+                self.message("Uploading attachment...")
+                noteStore.updateNote(self.token(), note)
+                if insert_in_content:
+                    view.insert(edit, view.sel()[0].a,
+                                '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
+                    sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
+            except Exception as e:
+                sublime.error_message(
+                    "Evernote plugin cannot insert the attachment.\n" +
+                    explain_error(e))
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
@@ -813,8 +880,8 @@ class EvernoteShowAttachments(EvernoteDoText):
                         else:
                             open_file_with_app(tmp)
                     except Exception as e:
-                        sublime.error_message("Unable to fetch the attachment.")
-                        print(e)
+                        sublime.error_message(
+                            "Unable to fetch the attachment.\n%s" % explain_error(e))
 
             if menu:
                 self.view.window().show_quick_panel(menu, on_done)
