@@ -21,7 +21,7 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
-**v2.5.2** (not yet released)
+**v2.5.2**
 
  + Added attachments management: list, open, insert attachments from file or url (solves #24)
  + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
@@ -62,7 +62,7 @@ If you need to reconfigure the plugin go to `Preferences > Package Settings > Ev
 > **PLEASE NOTE**
 > 
 > The authentication method makes use of the Developer Token which is unique to your account and grants read-write access to your Evernote.
-> This token will be saved in your user settings in the `Evernote.sublime-settings` so make sure you do not share this publicly! 
+> This token will be saved in your user settings in the `Evernote.sublime-settings` file so make sure you do not share this publicly! 
 
 
 ## Commands
