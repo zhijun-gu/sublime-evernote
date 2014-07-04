@@ -1,0 +1,8 @@
+What's new in v2.5.2
+====================
+
+ + Added attachments management: list, open, insert attachments from file or url (solves #24)
+ + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
+ + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
+ + Now notes in webapp are opened in default browser (solves #22)
+ + Configuration asks for noteStoreUrl so the plugin works properly for yinxiang.com (solves #20)

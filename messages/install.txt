@@ -1,0 +1,21 @@
+Evernote for ST3
+================
+
+Thanks for installing the Evernote plugin.
+
+To start using it install it from Package Control and type "Evernote" on the Command Pallette (ctrl+shift+p).
+See the README and the [wiki] for more details about the commands.
+
+When you first run this package from the command palette, it will launch a browser window with your Evernote developer token. Copy the token and paste it into the prompt at the bottom of your Sublime window.
+Sublime will store the authentication data in `Sublime Text 3/Packages/User/Evernote.sublime-settings`.
+
+> **PLEASE NOTE**
+> 
+> The authentication method makes use of the Developer Token
+> which is unique to your account and grants read-write access
+> to your Evernote.
+> This token will be saved in your user settings
+> in the `Evernote.sublime-settings` file,
+> so make sure you do not share this publicly! 
+
+[wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>

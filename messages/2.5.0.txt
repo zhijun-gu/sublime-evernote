@@ -1,0 +1,10 @@
+What's new in v2.5.0
+====================
+
+ + Search note command added
+ + Attach command added
+ + Clip command added
+ + View in WebApp command added
+ + Autocomplete in metadata block
+ + Unicode chars in tags properly displayed
+ + Creation and update dates are displayed in status
