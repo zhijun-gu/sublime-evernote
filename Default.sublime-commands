@@ -6,6 +6,7 @@
     { "command": "open_evernote_note", "args": {"by_searching": true}, "caption": "Evernote: Search Note" },
     { "command": "open_evernote_note", "args": {"max_notes": 10, "by_searching": "*", "order": "updated", "ascending": false}, "caption": "Evernote: List recent notes" },
     { "command": "attach_to_evernote_note", "caption": "Evernote: Attach current file to a note" },
+    { "command": "insert_link_to_evernote_note", "caption": "Evernote: Insert link to a note" },
     {
         "caption": "Evernote Settings: User",
         "command": "open_file", "args":

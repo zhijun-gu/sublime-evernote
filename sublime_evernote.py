@@ -80,6 +80,13 @@ def append_to_view(view, text):
     return view
 
 
+def insert_to_view(view, text):
+    view.run_command('insert', {
+        'characters': text,
+    })
+    return view
+
+
 def find_syntax(lang, default=None):
     res = sublime.find_resources("%s.*Language" % lang)
     if res:
@@ -212,6 +219,16 @@ class EvernoteDo():
     def token(self):
         return self.settings.get("token")
 
+    def get_shard_id(self):
+        token_parts = self.token().split(":")
+        id = token_parts[0][2:]
+        return id
+
+    def get_user_id(self):
+        token_parts = self.token().split(":")
+        id = token_parts[1][2:]
+        return int(id, 16)
+
     def load_settings(self):
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
         pygm_style = self.settings.get('code_highlighting_style')
@@ -253,8 +270,7 @@ class EvernoteDo():
             callback(**kwargs)
 
         def __derive_note_store_url(token):
-            token_parts = token.split(":")
-            id = token_parts[0][2:]
+            id = self.get_shard_id()
             url = "http://www.evernote.com/shard/" + id + "/notestore"
             return url
 
@@ -765,6 +781,26 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
         return filename is not None or self.window.active_view() is not None
+
+
+class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
+
+    def open_note(self, guid, **unk_args):
+        noteStore = self.get_note_store()
+        note = noteStore.getNote(self.token(), guid, False, False, False, False)
+        title = note.title
+        link = self.get_note_link(guid)
+        mdlink = '[{}]({})'.format(title, link)
+        insert_to_view(self.window.active_view(), mdlink)
+
+    def get_note_link(self, guid):
+        linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
+        return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
+
+    def is_enabled(self):
+        if self.window.active_view().settings().get("$evernote_guid", False):
+            return True
+        return False
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
