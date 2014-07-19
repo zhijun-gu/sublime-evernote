@@ -728,7 +728,7 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
     def open_note(self, guid, insert_in_content=True, filename=None, prompt=False, **unk_args):
         import hashlib, mimetypes
         if filename is None:
-            view = self.window.active_view()
+            view = self.view
             if view is None:
                 sublime.error_message("Evernote plugin could not open the file you specified!")
                 return
