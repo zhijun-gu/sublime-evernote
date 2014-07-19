@@ -425,6 +425,8 @@ class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
             reload(markdown2)
             reload(html2text)
 
+        self.view = self.window.active_view()
+
         self.load_settings()
 
         if not self.token():
@@ -791,7 +793,7 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
         title = note.title
         link = self.get_note_link(guid)
         mdlink = '[{}]({})'.format(title, link)
-        insert_to_view(self.window.active_view(), mdlink)
+        insert_to_view(self.view, mdlink)
 
     def get_note_link(self, guid):
         linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
