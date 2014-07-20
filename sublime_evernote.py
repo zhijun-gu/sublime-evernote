@@ -836,7 +836,7 @@ class OpenLinkedEvernoteNote(EvernoteDoText):
         """
 
         for m in re.finditer(regex, text, re.IGNORECASE | re.VERBOSE):
-            if m.start() > relpos:
+            if m.start() >= relpos:
                 break
             if m.end() <= relpos:
                 continue
@@ -845,11 +845,20 @@ class OpenLinkedEvernoteNote(EvernoteDoText):
 
         return None
 
-    def is_enabled(self):
+    def is_enabled_and_visible(self):
+        if not is_syntax(self.view, 'Evernote'):
+            return False
+
+        if self.find_note_link_guid() is None:
+            return False
+
         return True
 
     def is_visible(self):
-        return True
+        return self.is_enabled_and_visible()
+
+    def is_enabled(self):
+        return self.is_enabled_and_visible()
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
