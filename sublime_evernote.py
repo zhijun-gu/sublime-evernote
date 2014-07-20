@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import re
 
 if sys.version_info < (3, 3):
     raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
@@ -801,6 +802,54 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self):
         return self.window.active_view().settings().get('$evernote', False)
+
+
+class OpenLinkedEvernoteNote(EvernoteDoText):
+
+    def do_run(self, edit):
+        guid = self.find_note_link_guid()
+        if guid is None:
+            return
+
+        LOG('Found link to note', guid)
+        self.view.window().run_command('open_evernote_note', {'note_guid': guid})
+
+    def find_note_link_guid(self):
+        if len(self.view.sel()) != 1:
+            return None
+
+        # Search a reasonable range for the link
+        offset = 500
+        begin = max(0, self.view.sel()[0].a - offset)
+        end = min(self.view.size(), self.view.sel()[0].a + offset)
+        relpos = self.view.sel()[0].a - begin
+        text = self.view.substr(sublime.Region(begin, end))
+        regex = """
+        \[.+\]              # The title of the note, which is the link text
+        \(                  # Beginning of the link
+        evernote:///view/   # Evernote link prefix
+        \d+/                # User ID
+        s\d+/               # Shard ID
+        ([0-9a-f-]+)/       # The note GUID, what we are looking for
+        [0-9a-f-]+/
+        \)                  # End of the link
+        """
+
+        for m in re.finditer(regex, text, re.IGNORECASE | re.VERBOSE):
+            if m.start() > relpos:
+                break
+            if m.end() <= relpos:
+                continue
+
+            return m.group(1)
+
+        return None
+
+    def is_enabled(self):
+        return True
+
+    def is_visible(self):
+        return True
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
