@@ -845,20 +845,12 @@ class OpenLinkedEvernoteNote(EvernoteDoText):
 
         return None
 
-    def is_enabled_and_visible(self):
-        if not is_syntax(self.view, 'Evernote'):
-            return False
-
-        if self.find_note_link_guid() is None:
-            return False
-
-        return True
-
     def is_visible(self):
-        return self.is_enabled_and_visible()
+        return self.view.settings().get('$evernote', False)
 
     def is_enabled(self):
-        return self.is_enabled_and_visible()
+        return (self.view.settings().get('$evernote', False) and
+                self.find_note_link_guid() is not None)
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
