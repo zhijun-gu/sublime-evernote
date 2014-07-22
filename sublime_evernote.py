@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import re
 
 if sys.version_info < (3, 3):
     raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
@@ -801,6 +802,84 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self):
         return self.window.active_view().settings().get('$evernote', False)
+
+
+# Note that this regex needs to work with both Python as well as Sublime.
+_EVERNOTE_LINK_REGEX = \
+    '\[(.+)\]' \
+    '\(' \
+    'evernote:///view/' \
+    '\d+/' \
+    's\d+/' \
+    '([0-9a-f-]+)/' \
+    '[0-9a-f-]+/' \
+    '\)'
+
+
+class OpenLinkedEvernoteNote(EvernoteDoText):
+
+    def do_run(self, edit):
+        guid = self.find_note_link_guid()
+        if guid is None:
+            return
+
+        LOG('Found link to note', guid)
+        self.view.window().run_command('open_evernote_note', {'note_guid': guid})
+
+    def find_note_link_guid(self):
+        if len(self.view.sel()) != 1:
+            return None
+
+        # Search a reasonable range for the link
+        offset = 500
+        begin = max(0, self.view.sel()[0].a - offset)
+        end = min(self.view.size(), self.view.sel()[0].a + offset)
+        relpos = self.view.sel()[0].a - begin
+        text = self.view.substr(sublime.Region(begin, end))
+
+        for m in re.finditer(_EVERNOTE_LINK_REGEX, text, re.IGNORECASE):
+            if m.start() >= relpos:
+                break
+            if m.end() <= relpos:
+                continue
+
+            return m.group(2)
+
+        return None
+
+    def is_visible(self):
+        return self.view.settings().get('$evernote', False)
+
+    def is_enabled(self):
+        return (self.view.settings().get('$evernote', False) and
+                self.find_note_link_guid() is not None)
+
+
+class ListLinkedEvernoteNotes(EvernoteDoText):
+
+    def do_run(self, edit):
+        links = []
+        self.view.find_all(_EVERNOTE_LINK_REGEX, sublime.IGNORECASE, '$0', links)
+
+        if not links:
+            self.message('Could not find any links in the current note')
+            return
+
+        links = [re.match(_EVERNOTE_LINK_REGEX, l, re.IGNORECASE).groups() for l in links]
+        linktitles, linkguids = (list(l) for l in zip(*links))
+
+        def open_link(i):
+            if i == -1:
+                return
+
+            guid = linkguids[i]
+            LOG('Opening link to note', guid)
+            self.view.window().run_command('open_evernote_note', {'note_guid': guid})
+
+        self.view.window().show_quick_panel(linktitles, open_link)
+
+    def is_enabled(self):
+        return self.view.settings().get('$evernote', False)
 
 
 class EvernoteInsertAttachment(EvernoteDoText):

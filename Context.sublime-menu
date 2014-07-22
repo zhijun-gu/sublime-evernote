@@ -1,0 +1,12 @@
+[
+    {
+        "caption": "-"
+    },
+    {
+        "caption": "Open linked Evernote note...",
+        "command": "open_linked_evernote_note"
+    },
+    {
+        "caption": "-"
+    }
+]
