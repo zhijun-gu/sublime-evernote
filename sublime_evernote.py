@@ -87,11 +87,6 @@ def insert_to_view(view, text):
     return view
 
 
-def is_syntax(view, lang):
-    syntax = view.settings().get('syntax')
-    return syntax.endswith("%s.tmLanguage" % lang)
-
-
 def find_syntax(lang, default=None):
     res = sublime.find_resources("%s.*Language" % lang)
     if res:
@@ -805,7 +800,7 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
         return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
 
     def is_enabled(self):
-        return is_syntax(self.window.active_view(), 'Evernote')
+        return self.window.active_view().settings().get('$evernote', False)
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
@@ -965,6 +960,7 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         self.load_settings()
         view = self.window.new_file()
         view.set_syntax_file(self.md_syntax)
+        view.settings().set("$evernote", True)
         view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.set_scratch(True)
         view.run_command("insert_snippet", {"contents": META_SNIPPET})
