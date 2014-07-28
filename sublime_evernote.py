@@ -327,6 +327,10 @@ class EvernoteDo():
         EvernoteDo._notebooks_cache = notebooks
         return notebooks
 
+    def get_note_link(self, guid):
+        linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
+        return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
+
     def notebook_from_guid(self, guid):
         self.get_notebooks()  # To trigger caching
         return EvernoteDo._notebook_by_guid[guid]
@@ -796,12 +800,8 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
         mdlink = '[{}]({})'.format(title, link)
         insert_to_view(self.view, mdlink)
 
-    def get_note_link(self, guid):
-        linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
-        return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
-
     def is_enabled(self):
-        return self.window.active_view().settings().get('$evernote', False)
+        return bool(self.window.active_view().settings().get('$evernote', False))
 
 
 # Note that this regex needs to work with both Python as well as Sublime.
@@ -848,7 +848,7 @@ class OpenLinkedEvernoteNote(EvernoteDoText):
         return None
 
     def is_visible(self):
-        return self.view.settings().get('$evernote', False)
+        return bool(self.view.settings().get('$evernote', False))
 
     def is_enabled(self):
         return (self.view.settings().get('$evernote', False) and
@@ -879,7 +879,18 @@ class ListLinkedEvernoteNotes(EvernoteDoText):
         self.view.window().show_quick_panel(linktitles, open_link)
 
     def is_enabled(self):
-        return self.view.settings().get('$evernote', False)
+        return bool(self.view.settings().get('$evernote', False))
+
+
+class ViewInEvernoteClientCommand(EvernoteDoText):
+
+    def do_run(self, edit):
+        notelink = self.get_note_link(self.view.settings().get("$evernote_guid"))
+        LOG('Launching Evernote client with link', notelink)
+        open_file_with_app(notelink)
+
+    def is_enabled(self):
+        return bool(self.view.settings().get("$evernote_guid", False))
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
