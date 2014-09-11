@@ -853,7 +853,8 @@ class EvernoteShowAttachments(EvernoteDoText):
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
             resources = note.resources or []
-            menu = [[r.attributes.fileName or r.attributes.sourceURL,
+            menu = [[r.attributes.fileName or r.attributes.sourceURL or
+                     ("Unnamed %s" % (r.mime or "")),
                      "hash: %s" % hashstr(r.data.bodyHash)]
                     for r in resources]
 
