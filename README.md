@@ -21,6 +21,12 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.5.3**
+
+ + Added links to notes management (thanks to @rahul-ramadas, see #36)
+ + Open note in Client command, tested on Windows only (thanks to @rahul-ramadas)
+ + Bugfixes: better error messages, correct handling of unnamed attachments
+
 **v2.5.2**
 
  + Added attachments management: list, open, insert attachments from file or url (solves #24)
@@ -149,11 +155,25 @@ The download will be done asynchronously as it may take some time for heavy file
 
 This command will take the current selections, format them as highlighted code snippets, put them in a new note, letting you choose its title, tags and notebook.
 
-### View note in WebApp
+### Links to notes
+
+`Command Palette` > `Evernote: List linked notes`
+
+This command shows a list of links to notes present in the currently opened note, if any. Selecting an item in the list will open the note in a new view.
+
+`Command Palette` > `Evernote: Insert link to a note`
+
+Lets you select a note and inserts a link to it in the currently opened one.
+
+### View note in WebApp/Client
 
 `Command Palette` > `Evernote: View note in WebApp`
 
 This command will open the currently opened note in Evernote's WebApp in a browser. From there you can view it, share it or continuing editing it from the WebApp's editor. You may need to login before being able to view the note.
+
+`Command Palette` > `Evernote: View note in Evernote client`
+
+This command will open the currently opened note in your local Evernote client, if installed.
 
 ## Markdown
 
@@ -224,6 +244,7 @@ The plugin has been made possible by the contribution of several people:
      - [rekotan](https://github.com/rekotan/SublimeEvernote)
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
  * Other contributors:
+   [rahul-ramadas](https://github.com/rahul-ramadas),
    [mwcraig](https://github.com/mwcraig),
    [rayou](https://github.com/rayou),
    [dimfeld](https://github.com/dimfeld),

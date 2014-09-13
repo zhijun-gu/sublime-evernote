@@ -1,0 +1,7 @@
+What's new in v2.5.3
+====================
+
+ + Added links to notes management (thanks to @rahul-ramadas, see #36)
+ + Open note in Client command, tested on Windows only (thanks to @rahul-ramadas)
+ + Bugfix: display error messages coming from uncaught exceptions
+ + Bugfix: correct handling of unnamed attachments
