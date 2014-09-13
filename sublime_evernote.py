@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import re
 
 if sys.version_info < (3, 3):
     raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
@@ -41,7 +42,7 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     def LOG(*args):
@@ -75,6 +76,13 @@ def metadata_header(title="", tags=[], notebook="", **kw):
 
 def append_to_view(view, text):
     view.run_command('append', {
+        'characters': text,
+    })
+    return view
+
+
+def insert_to_view(view, text):
+    view.run_command('insert', {
         'characters': text,
     })
     return view
@@ -212,6 +220,16 @@ class EvernoteDo():
     def token(self):
         return self.settings.get("token")
 
+    def get_shard_id(self):
+        token_parts = self.token().split(":")
+        id = token_parts[0][2:]
+        return id
+
+    def get_user_id(self):
+        token_parts = self.token().split(":")
+        id = token_parts[1][2:]
+        return int(id, 16)
+
     def load_settings(self):
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
         pygm_style = self.settings.get('code_highlighting_style')
@@ -253,8 +271,7 @@ class EvernoteDo():
             callback(**kwargs)
 
         def __derive_note_store_url(token):
-            token_parts = token.split(":")
-            id = token_parts[0][2:]
+            id = self.get_shard_id()
             url = "http://www.evernote.com/shard/" + id + "/notestore"
             return url
 
@@ -309,6 +326,10 @@ class EvernoteDo():
         EvernoteDo._notebook_by_guid = dict([(nb.guid, nb) for nb in notebooks])
         EvernoteDo._notebooks_cache = notebooks
         return notebooks
+
+    def get_note_link(self, guid):
+        linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
+        return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
 
     def notebook_from_guid(self, guid):
         self.get_notebooks()  # To trigger caching
@@ -411,6 +432,8 @@ class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
             from imp import reload
             reload(markdown2)
             reload(html2text)
+
+        self.view = self.window.active_view()
 
         self.load_settings()
 
@@ -716,7 +739,7 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
     def open_note(self, guid, insert_in_content=True, filename=None, prompt=False, **unk_args):
         import hashlib, mimetypes
         if filename is None:
-            view = self.window.active_view()
+            view = self.view
             if view is None:
                 sublime.error_message("Evernote plugin could not open the file you specified!")
                 return
@@ -771,6 +794,109 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
     def is_enabled(self, insert_in_content=True, filename=None, **unk):
         return filename is not None or self.window.active_view() is not None
+
+
+class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
+
+    def open_note(self, guid, **unk_args):
+        noteStore = self.get_note_store()
+        note = noteStore.getNote(self.token(), guid, False, False, False, False)
+        title = note.title
+        link = self.get_note_link(guid)
+        mdlink = '[{}]({})'.format(title, link)
+        insert_to_view(self.view, mdlink)
+
+    def is_enabled(self):
+        return bool(self.window.active_view().settings().get('$evernote', False))
+
+
+# Note that this regex needs to work with both Python as well as Sublime.
+_EVERNOTE_LINK_REGEX = \
+    '\[(.+)\]' \
+    '\(' \
+    'evernote:///view/' \
+    '\d+/' \
+    's\d+/' \
+    '([0-9a-f-]+)/' \
+    '[0-9a-f-]+/' \
+    '\)'
+
+
+class OpenLinkedEvernoteNote(EvernoteDoText):
+
+    def do_run(self, edit):
+        guid = self.find_note_link_guid()
+        if guid is None:
+            return
+
+        LOG('Found link to note', guid)
+        self.view.window().run_command('open_evernote_note', {'note_guid': guid})
+
+    def find_note_link_guid(self):
+        if len(self.view.sel()) != 1:
+            return None
+
+        # Search a reasonable range for the link
+        offset = 500
+        begin = max(0, self.view.sel()[0].a - offset)
+        end = min(self.view.size(), self.view.sel()[0].a + offset)
+        relpos = self.view.sel()[0].a - begin
+        text = self.view.substr(sublime.Region(begin, end))
+
+        for m in re.finditer(_EVERNOTE_LINK_REGEX, text, re.IGNORECASE):
+            if m.start() >= relpos:
+                break
+            if m.end() <= relpos:
+                continue
+
+            return m.group(2)
+
+        return None
+
+    def is_visible(self):
+        return bool(self.view.settings().get('$evernote', False))
+
+    def is_enabled(self):
+        return (self.view.settings().get('$evernote', False) and
+                self.find_note_link_guid() is not None)
+
+
+class ListLinkedEvernoteNotes(EvernoteDoText):
+
+    def do_run(self, edit):
+        links = []
+        self.view.find_all(_EVERNOTE_LINK_REGEX, sublime.IGNORECASE, '$0', links)
+
+        if not links:
+            self.message('Could not find any links in the current note')
+            return
+
+        links = [re.match(_EVERNOTE_LINK_REGEX, l, re.IGNORECASE).groups() for l in links]
+        linktitles, linkguids = (list(l) for l in zip(*links))
+
+        def open_link(i):
+            if i == -1:
+                return
+
+            guid = linkguids[i]
+            LOG('Opening link to note', guid)
+            self.view.window().run_command('open_evernote_note', {'note_guid': guid})
+
+        self.view.window().show_quick_panel(linktitles, open_link)
+
+    def is_enabled(self):
+        return bool(self.view.settings().get('$evernote', False))
+
+
+class ViewInEvernoteClientCommand(EvernoteDoText):
+
+    def do_run(self, edit):
+        notelink = self.get_note_link(self.view.settings().get("$evernote_guid"))
+        LOG('Launching Evernote client with link', notelink)
+        open_file_with_app(notelink)
+
+    def is_enabled(self):
+        return bool(self.view.settings().get("$evernote_guid", False))
 
 
 class EvernoteInsertAttachment(EvernoteDoText):
@@ -931,6 +1057,7 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         self.load_settings()
         view = self.window.new_file()
         view.set_syntax_file(self.md_syntax)
+        view.settings().set("$evernote", True)
         view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.set_scratch(True)
         view.run_command("insert_snippet", {"contents": META_SNIPPET})
