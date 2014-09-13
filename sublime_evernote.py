@@ -395,10 +395,13 @@ class EvernoteDoText(EvernoteDo, sublime_plugin.TextCommand):
 
         self.load_settings()
 
-        if not self.token():
-            self.connect(lambda **kw: self.do_run(edit, **kw), **kwargs)
-        else:
-            self.do_run(edit, **kwargs)
+        try:
+            if not self.token():
+                self.connect(lambda **kw: self.do_run(edit, **kw), **kwargs)
+            else:
+                self.do_run(edit, **kwargs)
+        except Exception as e:
+            sublime.error_message('Evernote error:\n%s' % explain_error(e))
 
 
 class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
@@ -411,10 +414,13 @@ class EvernoteDoWindow(EvernoteDo, sublime_plugin.WindowCommand):
 
         self.load_settings()
 
-        if not self.token():
-            self.connect(self.do_run, **kwargs)
-        else:
-            self.do_run(**kwargs)
+        try:
+            if not self.token():
+                self.connect(self.do_run, **kwargs)
+            else:
+                self.do_run(**kwargs)
+        except Exception as e:
+            sublime.error_message('Evernote error:\n%s' % explain_error(e))
 
 
 class SendToEvernoteCommand(EvernoteDoText):
@@ -530,10 +536,10 @@ class SendToEvernoteCommand(EvernoteDoText):
                 if e.errorCode == 9:
                     self.connect(self.do_send, **args)
                 else:
-                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(err)):
+                    if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                         self.connect(self.do_send, **args)
             except EDAMSystemException as e:
-                sublime.error_message('Evernote error:\n%s' % explain_error(err))
+                sublime.error_message('Evernote error:\n%s' % explain_error(e))
             except Exception as e:
                 sublime.error_message('Evernote plugin error %s' % e)
 
