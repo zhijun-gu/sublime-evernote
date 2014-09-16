@@ -42,14 +42,12 @@ EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = True
+DEBUG = False
 
-if DEBUG:
-    def LOG(*args):
+
+def LOG(*args):
+    if DEBUG:
         print("Evernote:", *args)
-else:
-    def LOG(*args):
-        pass
 
 
 def extractTags(tags):
@@ -231,7 +229,9 @@ class EvernoteDo():
         return int(id, 16)
 
     def load_settings(self):
+        global DEBUG
         self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+        DEBUG = bool(self.settings.get('debug'))
         pygm_style = self.settings.get('code_highlighting_style')
         if pygm_style:
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
