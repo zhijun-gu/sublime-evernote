@@ -220,13 +220,13 @@ class EvernoteDo():
     def token(self):
         return self.settings.get("token")
 
-    def get_shard_id(self):
-        token_parts = self.token().split(":")
+    def get_shard_id(self, token=None):
+        token_parts = (token or self.token()).split(":")
         id = token_parts[0][2:]
         return id
 
-    def get_user_id(self):
-        token_parts = self.token().split(":")
+    def get_user_id(self, token=None):
+        token_parts = (token or self.token()).split(":")
         id = token_parts[1][2:]
         return int(id, 16)
 
@@ -271,7 +271,7 @@ class EvernoteDo():
             callback(**kwargs)
 
         def __derive_note_store_url(token):
-            id = self.get_shard_id()
+            id = self.get_shard_id(token)
             url = "http://www.evernote.com/shard/" + id + "/notestore"
             return url
 
