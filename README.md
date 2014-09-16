@@ -21,6 +21,11 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.5.4**
+
+ + Bugfix: solves a problem in setting a new token (see #48)
+ + Added a `debug` flag in settings
+
 **v2.5.3**
 
  + Added links to notes management (thanks to @rahul-ramadas, see #36)
@@ -225,6 +230,7 @@ Setting                   | Purpose
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
 `sort_notebooks`          | sorts notebooks alphabetically in pallette
 `show_stacks`             | shows the stack of notebooks in pallette
+`debug`                   | enables logging in the console
 
 
 # Acknowledgements
