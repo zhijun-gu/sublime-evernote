@@ -39,7 +39,7 @@ if sys.version_info[0] == 3:
     xrange = range
 
 # Use Unicode characters instead of their ascii psuedo-replacements
-UNICODE_SNOB = 0
+UNICODE_SNOB = 1
 
 # Escape all special characters.  Output is less readable, but avoids corner case formatting issues.
 ESCAPE_SNOB = 0
@@ -281,7 +281,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         self.outtext = self.outtext.join(self.outtextlist)
         if self.unicode_snob:
-            nbsp = unichr(name2cp('nbsp'))
+            nbsp = chr(name2cp('nbsp'))
         else:
             nbsp = u' '
         self.outtext = self.outtext.replace(u'&nbsp_place_holder;', nbsp)
@@ -801,7 +801,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             return unifiable_n[c]
         else:
             try:
-                return unichr(c)
+                return chr(c)
             except NameError: #Python3
                 return chr(c)
 
@@ -813,7 +813,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             except KeyError: return "&" + c + ';'
             else:
                 try:
-                    return unichr(name2cp(c))
+                    return chr(name2cp(c))
                 except NameError: #Python3
                     return chr(name2cp(c))
 
