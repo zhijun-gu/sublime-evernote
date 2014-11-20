@@ -241,6 +241,10 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['wiki-tables'] = None
         css = self.settings.get("inline_css")
         if css is not None:
+            for tag in css:
+                css[tag] = css[tag].strip()
+                if not css[tag].endswith(";"):
+                    css[tag] = css[tag] + ";"
             EvernoteDo.MD_EXTRAS['inline-css'] = css
         self.md_syntax = self.settings.get("md_syntax")
         if not self.md_syntax:
