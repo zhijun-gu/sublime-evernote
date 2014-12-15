@@ -224,6 +224,7 @@ Setting                   | Purpose
 `inline_css`              | a dictionary associating some HTML element names to inline CSS styles; currently the only elements that can be styled in this way are: `pre`, `code`, `h1`, `hr`, `blockquote` and `sup`. Additionally `footnotes` can be associated to some style for the `div` containing the footnotes at the end of the note. The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed). See [here](http://dev.evernote.com/doc/articles/enml.php) for details.
 `code_highlighting_style` | a pygments style among `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`, `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
 `code_friendly`           | if `true` the `code-friendly` extra of markdown2 is enabled
+`smarty_pants`            | if `true` the `smarty-pants` extra of markdown2 is enabled
 `evernote_autocomplete`   | when this setting is true, suggestions will be offered for autocompletion of the `notebook` and `tags` fields in metadata. Default is true.
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.

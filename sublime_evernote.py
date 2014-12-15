@@ -239,6 +239,8 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
         if self.settings.get("wiki_tables"):
             EvernoteDo.MD_EXTRAS['wiki-tables'] = None
+        if self.settings.get("smarty_pants"):
+            EvernoteDo.MD_EXTRAS['smarty-pants'] = None
         css = self.settings.get("inline_css")
         if css is not None:
             for tag in css:
