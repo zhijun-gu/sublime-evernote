@@ -195,6 +195,30 @@ def explain_error(err):
         return 'Evernote plugin error, please contact developer at\n'\
                'https://github.com/bordaigorl/sublime-evernote/issues'
 
+def async_do(f, progress_msg="Evernote operation", done_msg=None):
+    if not done_msg:
+        done_msg = progress_msg + ': ' + "done!"
+    status = {'done': False, 'i': 0}
+    def do_stuff(s):
+        try:
+            f()
+        except:
+            raise
+        finally:
+            s['done'] = True
+
+    def progress(s):
+        if s['done']:
+            sublime.status_message(done_msg)
+        else:
+            i = s['i']
+            bar = "... [%s=%s]" % (' '*i, ' '*(7-i))
+            sublime.status_message(progress_msg + bar)
+            s['i'] = (i + 1) % 8
+            sublime.set_timeout(lambda: progress(s), 100)
+
+    sublime.set_timeout(lambda: progress(status), 0)
+    sublime.set_timeout_async(lambda: do_stuff(status), 0)
 
 class EvernoteDo():
 
@@ -543,7 +567,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                 on_cancel()
 
         def __send_note(notebookGuid):
-            sublime.set_timeout_async(lambda: __send_note_async(notebookGuid), 0)
+            async_do(lambda: __send_note_async(notebookGuid), "Sending note")
 
         def __send_note_async(notebookGuid):
             note.notebookGuid = notebookGuid
@@ -603,7 +627,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                     self.connect(self.__update_note)
 
-        sublime.set_timeout_async(__update_note, 0)
+        async_do(__update_note, "Updating note")
 
     def is_enabled(self):
         if self.view.settings().get("$evernote_guid", False):
@@ -666,12 +690,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 return
             search_args['notebookGuid'] = notebooks[notebook].guid
             notes = self.find_notes(search_args, max_notes)
-            sublime.set_timeout(lambda: notes_panel(notes), 0)
+            async_do(lambda: notes_panel(notes), "Fetching notes list")
 
         def do_search(query):
             self.message("Searching notes...")
             search_args['words'] = query
-            notes_panel(self.find_notes(search_args, max_notes), True)
+            async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list")
 
         if note_guid:
             self.open_note(note_guid, **kwargs)
@@ -701,7 +725,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
-        sublime.set_timeout_async(lambda: self.do_open_note(guid, convert, **unk_args),0)
+        async_do(lambda: self.do_open_note(guid, convert, **unk_args), "Retrieving note")
 
     def do_open_note(self, guid, convert=True, **unk_args):
         try:
@@ -804,8 +828,10 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
                 note.content = content[0:-10] + \
                     '<en-media type="%s" hash="%s"/></en-note>' % (mime, h.hexdigest())
             note.resources = resources
-            noteStore.updateNote(self.token(), note)
-            self.message("Successfully attached to note '%s'" % note.title)
+            def do():
+                noteStore.updateNote(self.token(), note)
+                self.message("Successfully attached to note '%s'" % note.title)
+            async_do(do, "Uploading attachment")
         except Exception as e:
             sublime.error_message(explain_error(e))
 
@@ -950,30 +976,32 @@ class EvernoteInsertAttachment(EvernoteDoText):
                     explain_error(e))
                 return
 
-            try:
-                guid = self.view.settings().get("$evernote_guid")
-                noteStore = self.get_note_store()
-                note = noteStore.getNote(self.token(), guid, False, False, False, False)
-                mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-                h = hashlib.md5(filecontents)
-                attachment = Types.Resource(
-                    # noteGuid=guid,
-                    mime=mime,
-                    data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
-                    attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
-                resources = note.resources or []
-                resources.append(attachment)
-                note.resources = resources
-                self.message("Uploading attachment...")
-                noteStore.updateNote(self.token(), note)
-                if insert_in_content:
-                    view.insert(edit, view.sel()[0].a,
-                                '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
-                    sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
-            except Exception as e:
-                sublime.error_message(
-                    "Evernote plugin cannot insert the attachment.\n" +
-                    explain_error(e))
+            def upload_async():
+                try:
+                    guid = self.view.settings().get("$evernote_guid")
+                    noteStore = self.get_note_store()
+                    note = noteStore.getNote(self.token(), guid, False, False, False, False)
+                    mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+                    h = hashlib.md5(filecontents)
+                    attachment = Types.Resource(
+                        # noteGuid=guid,
+                        mime=mime,
+                        data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
+                        attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
+                    resources = note.resources or []
+                    resources.append(attachment)
+                    note.resources = resources
+                    noteStore.updateNote(self.token(), note)
+                    if insert_in_content:
+                        tag = '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest())
+                        view.run_command('insert', {'characters': tag})
+                        sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
+                except Exception as e:
+                    sublime.error_message(
+                        "Evernote plugin cannot insert the attachment.\n" +
+                        explain_error(e))
+
+            async_do(upload_async, "Uploading attachment")
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
@@ -1008,9 +1036,9 @@ class EvernoteShowAttachments(EvernoteDoText):
                     for r in resources]
 
             def on_done(i):
-                sublime.set_timeout_async(lambda: on_done2(i), 10)
+                async_do(lambda: on_done_async(i), "Fetching Attachment")
 
-            def on_done2(i):
+            def on_done_async(i):
                 if i >= 0:
                     import tempfile, mimetypes
                     try:
