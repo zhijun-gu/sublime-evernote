@@ -646,6 +646,11 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     return
                 self.message('Retrieving note "%s"...' % notes[i].title)
                 self.open_note(notes[i].guid, **kwargs)
+
+            if len(notes) == 1:
+                on_note(0)
+                return
+
             if show_notebook:
                 menu = ["[%s] » %s" % (self.notebook_from_guid(note.notebookGuid).name, note.title) for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
