@@ -543,6 +543,9 @@ class SendToEvernoteCommand(EvernoteDoText):
                 on_cancel()
 
         def __send_note(notebookGuid):
+            sublime.set_timeout_async(lambda: __send_note_async(notebookGuid), 0)
+
+        def __send_note_async(notebookGuid):
             note.notebookGuid = notebookGuid
 
             LOG(note.title)
@@ -600,7 +603,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                     self.connect(self.__update_note)
 
-        __update_note()
+        sublime.set_timeout_async(__update_note, 0)
 
     def is_enabled(self):
         if self.view.settings().get("$evernote_guid", False):
@@ -698,6 +701,9 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
+        sublime.set_timeout_async(lambda: self.do_open_note(guid, convert, **unk_args),0)
+
+    def do_open_note(self, guid, convert=True, **unk_args):
         try:
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
