@@ -262,6 +262,8 @@ The plugin has been made possible by the contribution of several people:
 
 If you think your name should be here, let us know!
 
+Also thanks to first donor, Matthew Baltrusitis! 
+
 Libraries (some adapted to work with Evernote formats):
 
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
