@@ -737,6 +737,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
+            newview.settings().set("$evernote_modified", False)
         except Exception as e:
             sublime.error_message(explain_error(e))
 
@@ -1103,7 +1104,7 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
             view.settings().set("$evernote_modified", True)
 
     def on_pre_close(self, view):
-        if view.settings().get("$evernote") and view.settings().get("$evernote_modified"):
+        if view and view.settings().get("$evernote") and view.settings().get("$evernote_modified"):
             # There is no API to cancel the closing of a view
             # so we let Sublime close it but clone it first and then ask the user.
             choices = ["Close and discard changes", "Save to Evernote and close"]
