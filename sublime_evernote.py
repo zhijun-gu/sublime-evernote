@@ -1110,6 +1110,8 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
             choices = ["Close and discard changes", "Save to Evernote and close"]
             view.window().run_command("clone_file")
             cloned = view.window().active_view()
+            if not cloned:
+                return
             def on_choice(i):
                 if i == 1:
                     cloned.run_command("save_evernote_note")
