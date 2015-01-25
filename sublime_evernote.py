@@ -730,12 +730,13 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 newview.settings().set("$evernote", True)
                 newview.settings().set("$evernote_guid", note.guid)
                 newview.settings().set("$evernote_title", note.title)
-                append_to_view(newview, meta+mdtxt)
                 syntax = self.md_syntax
+                note_contents = meta+mdtxt
             else:
                 syntax = find_syntax("XML")
-                append_to_view(newview, note.content)
+                note_contents = note.content
             newview.set_syntax_file(syntax)
+            append_to_view(newview, note_contents)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
