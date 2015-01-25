@@ -36,7 +36,8 @@ from datetime import datetime
 
 from base64 import b64encode, b64decode
 
-USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
+EVERNOTE_PLUGIN_VERSION = "2.6"
+USER_AGENT = {'User-Agent': 'SublimeEvernote/' + EVERNOTE_PLUGIN_VERSION}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
