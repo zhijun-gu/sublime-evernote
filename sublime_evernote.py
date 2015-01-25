@@ -203,7 +203,7 @@ def async_do(f, progress_msg="Evernote operation", done_msg=None):
         try:
             f()
         except:
-            raise
+            pass
         finally:
             s['done'] = True
 
