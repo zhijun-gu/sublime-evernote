@@ -156,7 +156,7 @@ def err_reason(err):
 
 def explain_error(err):
     if isinstance(err, EDAMUserException):
-        print("Evernote error: [%s] %s" % (errcode2name(err), err.parameter))
+        printError("Evernote error: [%s]\n\t%s" % (errcode2name(err), err.parameter))
         if err.errorCode in error_groups["contents"][1]:
             explanation = "The contents of the note are not valid.\n"
             msg = err.parameter.split('"')
@@ -182,20 +182,35 @@ def explain_error(err):
         else:
             return err_reason(err)
     elif isinstance(err, EDAMSystemException):
-        print("Evernote error: [%s] %s" % (errcode2name(err), err.message))
+        printError("Evernote error: [%s]\n\t%s" % (errcode2name(err), err.message))
         return "Evernote cannot perform the requested action:\n" + err_reason(err)
     elif isinstance(err, EDAMNotFoundException):
-        print("Evernote error: [%s = %s] Not found" % (err.identifier, err.key))
+        printError("Evernote error: [%s = %s]\n\tNot found" % (err.identifier, err.key))
         return "Cannot find %s" % err.identifier.split('.', 1)[0]
     elif isinstance(err, gaierror):
-        print("Evernote error: [socket] %s" % str(err))
+        printError("Evernote error: [socket]\n\t%s" % str(err))
         return 'The Evernote services seem unreachable.\n'\
                'Please check your connection and retry.'
     else:
-        print("Evernote plugin error: %s" % str(err))
-        return 'Evernote plugin error, please contact developer at\n'\
+        printError("Evernote plugin error: %s" % str(err))
+        return 'Evernote plugin error, please see the console for more details.\nThen contact developer at\n'\
                'https://github.com/bordaigorl/sublime-evernote/issues'
 
+def printError(msg):
+    print(msg)
+    last_cmd, last_args, _ = sublime.active_window().active_view().command_history(-1)
+    print("\tLast command: %s %s" % (last_cmd, last_args or {}))
+    print("\tBEFORE SUBMITTING AN ISSUE (https://github.com/bordaigorl/sublime-evernote/issues):")
+    print("\t  1. Enable the `debug` setting in your Evernote.sublime-settings file and try again. If the problem persists take a note of the output in the console.\n\t     Make sure you delete personal information (e.g. Developer Token) from the output before posting it in an issue.")
+    print("\t  2. Check the wiki at https://github.com/bordaigorl/sublime-evernote/wiki")
+    print("\t  3. Search for similar issues at https://github.com/bordaigorl/sublime-evernote/issues?q=is%3Aissue")
+    print("\t(Evernote plugin v%s, ST %s, Python %s, %s %s%s)" % (
+        EVERNOTE_PLUGIN_VERSION,
+        sublime.version(),
+        "%s.%s.%s" % sys.version_info[:3],
+        sublime.platform(),
+        sublime.arch(),
+        ', debug' if DEBUG else '' ))
 
 class EvernoteDo():
 
