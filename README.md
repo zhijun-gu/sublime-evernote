@@ -7,6 +7,8 @@ This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEv
 
 To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>). See [First Use](#first-use) for linking the plugin to your account.
 
+If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gratipay].
+
 # Main Features
 
  * **Send a note to Evernote:** converts the markdown document in the current view into rich text and sends it to your Evernote. You will be able to choose a title, tags and the notebook where to store it.
@@ -237,7 +239,7 @@ Setting                   | Purpose
 
 The current maintainer is [bordaigorl].
 
-If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gittip](https://www.gittip.com/bordaigorl/).
+If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gratipay].
 
 If you would like to contribute, please see [CONTRIBUTING].
 
@@ -261,7 +263,7 @@ The plugin has been made possible by the contribution of several people:
 
 If you think your name should be here, let us know!
 
-Also thanks to first donor, Matthew Baltrusitis! 
+Also thanks to our first donor, Matthew Baltrusitis! 
 
 Libraries (some adapted to work with Evernote formats):
 
@@ -273,3 +275,4 @@ Libraries (some adapted to work with Evernote formats):
 [CONTRIBUTING]: <CONTRIBUTING.md>
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
 [bordaigorl]: <https://github.com/bordaigorl>
+[gratipay]: <https://gratipay.com/bordaigorl/>
