@@ -4,6 +4,11 @@ import os
 import json
 import re
 
+try:
+    import ssl
+except:
+    ssl = None
+
 if sys.version_info < (3, 3):
     raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
 
@@ -283,7 +288,8 @@ class EvernoteDo():
         self.message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
-            if noteStoreUrl.startswith("https://"):
+            if noteStoreUrl.startswith("https://") and not ssl:
+                LOG("Not using SSL")
                 noteStoreUrl = "http://" + noteStoreUrl[8:]
             self.settings.set("token", token)
             self.settings.set("noteStoreUrl", noteStoreUrl)
@@ -292,7 +298,11 @@ class EvernoteDo():
 
         def __derive_note_store_url(token):
             id = self.get_shard_id(token)
-            url = "http://www.evernote.com/shard/" + id + "/notestore"
+            url = "www.evernote.com/shard/" + id + "/notestore"
+            if ssl:
+                url = "https://" + url
+            else:
+                url = "http://" + url
             return url
 
         def on_token(token):
