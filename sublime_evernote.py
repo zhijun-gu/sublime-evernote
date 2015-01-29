@@ -716,8 +716,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
             nb_name = self.notebook_from_guid(note.notebookGuid).name
-            newview = self.window.new_file()
-            newview.set_scratch(True)
             LOG(note.content)
             LOG(note.guid)
             if convert:
@@ -743,15 +741,18 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     except Exception as e:
                         mdtxt = note.content
                         LOG("Conversion failed", e)
+                newview = self.window.new_file()
                 newview.settings().set("$evernote", True)
                 newview.settings().set("$evernote_guid", note.guid)
                 newview.settings().set("$evernote_title", note.title)
                 syntax = self.md_syntax
                 note_contents = meta+mdtxt
             else:
+                newview = self.window.new_file()
                 syntax = find_syntax("XML")
                 note_contents = note.content
             newview.set_syntax_file(syntax)
+            newview.set_scratch(True)
             append_to_view(newview, note_contents)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
