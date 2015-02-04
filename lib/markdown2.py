@@ -91,7 +91,6 @@ __author__ = "Trent Mick"
 
 import os
 import sys
-from pprint import pprint, pformat
 import re
 import logging
 try:
@@ -867,6 +866,13 @@ class Markdown(object):
     def _table_sub(self, match):
         head, underline, body = match.groups()
 
+        table_style = self._html_class_str_from_tag("table")
+        td_style =  self._html_class_str_from_tag("td")
+        th_style =  self._html_class_str_from_tag("th")
+        tr_style =  self._html_class_str_from_tag("tr")
+        tr_odd_style =  self._html_class_str_from_tag("tr:odd")
+        tr_even_style =  self._html_class_str_from_tag("tr:even")
+
         # Determine aligns for columns.
         cols = [cell.strip() for cell in underline.strip('| \t\n').split('|')]
         align_from_col_idx = {}
@@ -879,11 +885,12 @@ class Markdown(object):
                 align_from_col_idx[col_idx] = ' align="right"'
 
         # thead
-        hlines = ['<table>', '<thead>', '<tr>']
+        hlines = ['<table%s>' % table_style, '<thead>', '<tr%s>' % tr_style]
         cols = [cell.strip() for cell in head.strip('| \t\n').split('|')]
         for col_idx, col in enumerate(cols):
-            hlines.append('  <th%s>%s</th>' % (
+            hlines.append('  <th%s%s>%s</th>' % (
                 align_from_col_idx.get(col_idx, ''),
+                th_style,
                 self._run_span_gamut(col)
             ))
         hlines.append('</tr>')
@@ -891,12 +898,13 @@ class Markdown(object):
 
         # tbody
         hlines.append('<tbody>')
-        for line in body.strip('\n').split('\n'):
-            hlines.append('<tr>')
+        for i, line in enumerate(body.strip('\n').split('\n')):
+            hlines.append('<tr%s%s>' % (tr_style, tr_even_style if i % 2 else tr_odd_style))
             cols = [cell.strip() for cell in line.strip('| \t\n').split('|')]
             for col_idx, col in enumerate(cols):
-                hlines.append('  <td%s>%s</td>' % (
+                hlines.append('  <td%s%s>%s</td>' % (
                     align_from_col_idx.get(col_idx, ''),
+                    td_style,
                     self._run_span_gamut(col)
                 ))
             hlines.append('</tr>')
@@ -933,15 +941,14 @@ class Markdown(object):
                 )
             ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
         return table_re.sub(self._table_sub, text)
+
     def _wiki_table_sub(self, match):
         ttext = match.group(0).strip()
-        #print 'wiki table: %r' % match.group(0)
         rows = []
         for line in ttext.splitlines(0):
             line = line.strip()[2:-2].strip()
             row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
             rows.append(row)
-        #pprint(rows)
         table_style = self._html_class_str_from_tag("table")
         td_style =  self._html_class_str_from_tag("td")
         tr_style =  self._html_class_str_from_tag("tr")
