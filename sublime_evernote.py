@@ -258,6 +258,9 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
         if self.settings.get("code_friendly"):
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
+            html2text.EMPHASIS_MARK = "*"
+        else:
+            html2text.EMPHASIS_MARK = self.settings.get('emphasis_mark', html2text.EMPHASIS_MARK)
         if self.settings.get("wiki_tables"):
             EvernoteDo.MD_EXTRAS['wiki-tables'] = None
         css = self.settings.get("inline_css")
@@ -270,6 +273,8 @@ class EvernoteDo():
         self.md_syntax = self.settings.get("md_syntax")
         if not self.md_syntax:
             self.md_syntax = find_syntax("Evernote")
+        html2text.UL_ITEM_MARK = self.settings.get('item_mark', html2text.UL_ITEM_MARK)
+        html2text.STRONG_MARK = self.settings.get('strong_mark', html2text.STRONG_MARK)
 
     def message(self, msg):
         sublime.status_message(msg)
