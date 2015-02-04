@@ -65,6 +65,10 @@ IGNORE_ANCHORS = False
 IGNORE_IMAGES = False
 IGNORE_EMPHASIS = False
 
+UL_ITEM_MARK = '*'
+EMPHASIS_MARK = '_'
+STRONG_MARK = '**'
+
 ### Entity Nonsense ###
 
 def name2cp(k):
@@ -207,9 +211,9 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.ignore_images = IGNORE_IMAGES
         self.ignore_emphasis = IGNORE_EMPHASIS
         self.google_doc = False
-        self.ul_item_mark = '*'
-        self.emphasis_mark = '_'
-        self.strong_mark = '**'
+        self.ul_item_mark = UL_ITEM_MARK
+        self.emphasis_mark = EMPHASIS_MARK
+        self.strong_mark = STRONG_MARK
 
         if out is None:
             self.out = self.outtextf
