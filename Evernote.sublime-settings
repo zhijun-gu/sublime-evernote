@@ -16,6 +16,7 @@
     },
     "code_highlighting_style": "github",
     "code_friendly": true,
+    "gfm_tables": true,
     "notes_order": "updated",
     "evernote_autocomplete": true,
     "sort_notebooks": false,

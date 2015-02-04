@@ -263,6 +263,8 @@ class EvernoteDo():
             html2text.EMPHASIS_MARK = self.settings.get('emphasis_mark', html2text.EMPHASIS_MARK)
         if self.settings.get("wiki_tables"):
             EvernoteDo.MD_EXTRAS['wiki-tables'] = None
+        if self.settings.get("gfm_tables"):
+            EvernoteDo.MD_EXTRAS['tables'] = None
         css = self.settings.get("inline_css")
         if css is not None:
             for tag in css:
