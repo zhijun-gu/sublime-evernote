@@ -1767,6 +1767,8 @@ class Markdown(object):
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
+    _underline_re = re.compile(r"==(?=\S)(.+?)(?<=\S)==", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
@@ -1777,6 +1779,9 @@ class Markdown(object):
         else:
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
+        # text = self._strike_re.sub(r"<del>\1</del>", text)  # GFM way
+        text = self._strike_re.sub(r'<span style="text-decoration: line-through;">\1</span>', text)  # Evernote way
+        text = self._underline_re.sub(r'<span style="text-decoration: underline;">\1</span>', text)  # Evernote way
         return text
 
     # "smarty-pants" extra: Very liberal in interpreting a single prime as an
