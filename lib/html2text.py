@@ -258,6 +258,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.abbr_data = None  # last inner HTML (for abbr being defined)
         self.abbr_list = {}  # stack of abbreviations to write later
         self.baseurl = baseurl
+        self.span_stack = []
 
         try: del unifiable_n[name2cp('nbsp')]
         except KeyError: pass
@@ -502,11 +503,39 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag in ['em', 'i', 'u'] and not self.ignore_emphasis: self.o(self.emphasis_mark)
         if tag in ['strong', 'b'] and not self.ignore_emphasis: self.o(self.strong_mark)
-        if tag in ['del', 'strike', 's', 'kbd']:
+
+        if tag == 'kbd':
             if start:
                 self.o("<"+tag+">")
             else:
                 self.o("</"+tag+">")
+
+        if tag in ['del', 'strike', 's']:
+            self.o("~~")
+
+        if tag in ['ins', 'u']:
+            self.o("==")
+
+        # evernote strikethrough and underlined
+        if tag == "span":
+            if start:
+                style = attrs.get('style')
+                if style == "text-decoration: line-through;":
+                    self.span_stack.append("strike")
+                    self.o("~~")
+                elif style == "text-decoration: underline;":
+                    self.span_stack.append("underline")
+                    # self.o('<span style="text-decoration: underline;">')
+                    self.o('==')
+                else:
+                    self.span_stack.append(False)
+            else:
+                style = self.span_stack.pop()
+                if style == "strike":
+                    self.o("~~")
+                elif style == "underline":
+                    # self.o('</span>')
+                    self.o('==')
 
         if self.google_doc:
             if not self.inheader:
