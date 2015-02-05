@@ -1780,8 +1780,10 @@ class Markdown(object):
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
         # text = self._strike_re.sub(r"<del>\1</del>", text)  # GFM way
-        text = self._strike_re.sub(r'<span style="text-decoration: line-through;">\1</span>', text)  # Evernote way
-        text = self._underline_re.sub(r'<span style="text-decoration: underline;">\1</span>', text)  # Evernote way
+        # text = self._strike_re.sub(r'<span style="text-decoration: line-through;">\1</span>', text)  # Evernote way
+        # text = self._underline_re.sub(r'<span style="text-decoration: underline;">\1</span>', text)  # Evernote way
+        text = self._strike_re.sub(r'<strike>\1</strike>', text)
+        text = self._underline_re.sub(r'<u>\1</u>', text)
         return text
 
     # "smarty-pants" extra: Very liberal in interpreting a single prime as an
