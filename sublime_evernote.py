@@ -714,6 +714,8 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
         if from_notebook or with_tags:
             notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
+        elif len(notebooks) == 1:
+            on_notebook(0)
         else:
             if self.settings.get("show_stacks", True):
                 menu = ["%s » %s" % (nb.stack, nb.name) if nb.stack else nb.name for nb in notebooks]
