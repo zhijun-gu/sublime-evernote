@@ -742,7 +742,9 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             if isinstance(by_searching, str):
                 do_search(by_searching)
             else:
-                self.window.show_input_panel("Enter search query:", "", do_search, None, None)
+                p = self.window.show_input_panel("Enter search query:", "", do_search, None, None)
+                if isinstance(by_searching, dict):
+                    p.run_command("insert_snippet", {"contents": by_searching.get("snippet", "")})
             return
 
         if from_notebook or with_tags:
