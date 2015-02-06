@@ -1,13 +1,15 @@
 Evernote for Sublime Text
 =========================
 
+![release] ![licence] ![stars] ![issues] ![donations]
+
 [Sublime Text](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com).
 
 This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
 To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>). See [First Use](#first-use) for linking the plugin to your account.
 
-If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gratipay].
+If you like this plugin and would like to support its development please consider donating through a [paypal donation] or using [gratipay].
 
 # Main Features
 
@@ -276,3 +278,10 @@ Libraries (some adapted to work with Evernote formats):
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
 [bordaigorl]: <https://github.com/bordaigorl>
 [gratipay]: <https://gratipay.com/bordaigorl/>
+[paypal]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
+
+[release]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
+[licence]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
+[stars]: https://img.shields.io/github/stars/bordaigorl/sublime-evernote.svg
+[issues]: https://img.shields.io/github/issues/bordaigorl/sublime-evernote.svg
+[donations]: https://img.shields.io/gratipay/bordaigorl.svg
