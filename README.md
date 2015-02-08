@@ -1,7 +1,7 @@
 Evernote for Sublime Text
 =========================
 
-![release] ![licence] ![stars] ![issues] ![donations]
+![release] ![licence] ![stars] ![issues] [![donations]][gratipay] [![chat]][gitter]
 
 [Sublime Text](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com).
 
@@ -279,9 +279,11 @@ Libraries (some adapted to work with Evernote formats):
 [bordaigorl]: <https://github.com/bordaigorl>
 [gratipay]: <https://gratipay.com/bordaigorl/>
 [paypal]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
+[gitter]: <https://gitter.im/bordaigorl/sublime-evernote>
 
 [release]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
 [licence]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [stars]: https://img.shields.io/github/stars/bordaigorl/sublime-evernote.svg
 [issues]: https://img.shields.io/github/issues/bordaigorl/sublime-evernote.svg
 [donations]: https://img.shields.io/gratipay/bordaigorl.svg
+[chat]: https://img.shields.io/badge/gitter-join%20chat-green.svg
