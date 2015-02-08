@@ -69,6 +69,19 @@ See [Commands](#commands) and the [wiki] for details.
 The Evernote plugin can be installed using Package Control.
 See the [wiki] for detailed instructions.
 
+# Issues
+
+You may encounter problems in using the plugin.
+Issues can be posted at the [github repository][issues].
+
+Before posting a new issue:
+
+  1. Enable the `debug` setting in your `Evernote.sublime-settings` file and try again.
+  If the problem persists take a note of the output in the console.
+  Make sure you delete personal information (e.g. Developer Token) from the output before posting it in an issue.
+  2. Check the [wiki]
+  3. Search for similar issues [here](https://github.com/bordaigorl/sublime-evernote/issues?q=is%3Aissue)
+
 # Usage
 
 ## First use
