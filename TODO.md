@@ -1,3 +1,21 @@
+# Release Checklist
+
+ * update `EVERNOTE_PLUGIN_VERSION`
+ * check `DEBUG` is `False`
+ * update Changelog in Readme
+ * add update message to `messages` and `messages.json`
+ * update Contributors in Readme if needed
+ * update wiki if needed
+ * add release on GitHub with release notes from Readme
+
+# Documentation
+
+ * Known bugs in wiki:
+     - paragraphs and spacing #71, #67
+     - proxy
+ * More notes on issues in Readme
+ * See [issues with `needs-docs` label](https://github.com/bordaigorl/sublime-evernote/labels/needs-docs)
+
 # Under consideration
 
 Define a unified restricted format for metadata:

@@ -4,6 +4,11 @@ import os
 import json
 import re
 
+try:
+    import ssl
+except:
+    ssl = None
+
 if sys.version_info < (3, 3):
     raise RuntimeError('The Evernote plugin works with Sublime Text 3 only')
 
@@ -36,7 +41,8 @@ from datetime import datetime
 
 from base64 import b64encode, b64decode
 
-USER_AGENT = {'User-Agent': 'SublimeEvernote/2.0'}
+EVERNOTE_PLUGIN_VERSION = "2.6.0"
+USER_AGENT = {'User-Agent': 'SublimeEvernote/' + EVERNOTE_PLUGIN_VERSION}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
@@ -155,7 +161,7 @@ def err_reason(err):
 
 def explain_error(err):
     if isinstance(err, EDAMUserException):
-        print("Evernote error: [%s] %s" % (errcode2name(err), err.parameter))
+        printError("Evernote error: [%s]\n\t%s" % (errcode2name(err), err.parameter))
         if err.errorCode in error_groups["contents"][1]:
             explanation = "The contents of the note are not valid.\n"
             msg = err.parameter.split('"')
@@ -181,19 +187,63 @@ def explain_error(err):
         else:
             return err_reason(err)
     elif isinstance(err, EDAMSystemException):
-        print("Evernote error: [%s] %s" % (errcode2name(err), err.message))
+        printError("Evernote error: [%s]\n\t%s" % (errcode2name(err), err.message))
         return "Evernote cannot perform the requested action:\n" + err_reason(err)
     elif isinstance(err, EDAMNotFoundException):
-        print("Evernote error: [%s = %s] Not found" % (err.identifier, err.key))
+        printError("Evernote error: [%s = %s]\n\tNot found" % (err.identifier, err.key))
         return "Cannot find %s" % err.identifier.split('.', 1)[0]
     elif isinstance(err, gaierror):
-        print("Evernote error: [socket] %s" % str(err))
+        printError("Evernote error: [socket]\n\t%s" % str(err))
         return 'The Evernote services seem unreachable.\n'\
                'Please check your connection and retry.'
     else:
-        print("Evernote plugin error: %s" % str(err))
-        return 'Evernote plugin error, please contact developer at\n'\
+        printError("Evernote plugin error: %s" % str(err))
+        return 'Evernote plugin error, please see the console for more details.\nThen contact developer at\n'\
                'https://github.com/bordaigorl/sublime-evernote/issues'
+
+
+def printError(msg):
+    print(msg)
+    last_cmd, last_args, _ = sublime.active_window().active_view().command_history(-1)
+    print("\tLast command: %s %s" % (last_cmd, last_args or {}))
+    print("\tBEFORE SUBMITTING AN ISSUE (https://github.com/bordaigorl/sublime-evernote/issues):")
+    print("\t  1. Enable the `debug` setting in your Evernote.sublime-settings file and try again. If the problem persists take a note of the output in the console.\n\t     Make sure you delete personal information (e.g. Developer Token) from the output before posting it in an issue.")
+    print("\t  2. Check the wiki at https://github.com/bordaigorl/sublime-evernote/wiki")
+    print("\t  3. Search for similar issues at https://github.com/bordaigorl/sublime-evernote/issues?q=is%3Aissue")
+    print("\t(Evernote plugin v%s, ST %s, Python %s, %s %s%s)" % (
+        EVERNOTE_PLUGIN_VERSION,
+        sublime.version(),
+        "%s.%s.%s" % sys.version_info[:3],
+        sublime.platform(),
+        sublime.arch(),
+        ', debug' if DEBUG else '' ))
+
+
+def async_do(f, progress_msg="Evernote operation", done_msg=None):
+    if not done_msg:
+        done_msg = progress_msg + ': ' + "done!"
+    status = {'done': False, 'i': 0}
+
+    def do_stuff(s):
+        try:
+            f()
+        except:
+            pass
+        finally:
+            s['done'] = True
+
+    def progress(s):
+        if s['done']:
+            sublime.status_message(done_msg)
+        else:
+            i = s['i']
+            bar = "... [%s=%s]" % (' '*i, ' '*(7-i))
+            sublime.status_message(progress_msg + bar)
+            s['i'] = (i + 1) % 8
+            sublime.set_timeout(lambda: progress(s), 100)
+
+    sublime.set_timeout(lambda: progress(status), 0)
+    sublime.set_timeout_async(lambda: do_stuff(status), 0)
 
 
 class EvernoteDo():
@@ -237,14 +287,25 @@ class EvernoteDo():
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
         if self.settings.get("code_friendly"):
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
+            html2text.EMPHASIS_MARK = "*"
+        else:
+            html2text.EMPHASIS_MARK = self.settings.get('emphasis_mark', html2text.EMPHASIS_MARK)
         if self.settings.get("wiki_tables"):
             EvernoteDo.MD_EXTRAS['wiki-tables'] = None
+        if self.settings.get("gfm_tables"):
+            EvernoteDo.MD_EXTRAS['tables'] = None
         css = self.settings.get("inline_css")
         if css is not None:
+            for tag in css:
+                css[tag] = css[tag].strip()
+                if not css[tag].endswith(";"):
+                    css[tag] = css[tag] + ";"
             EvernoteDo.MD_EXTRAS['inline-css'] = css
         self.md_syntax = self.settings.get("md_syntax")
         if not self.md_syntax:
             self.md_syntax = find_syntax("Evernote")
+        html2text.UL_ITEM_MARK = self.settings.get('item_mark', html2text.UL_ITEM_MARK)
+        html2text.STRONG_MARK = self.settings.get('strong_mark', html2text.STRONG_MARK)
 
     def message(self, msg):
         sublime.status_message(msg)
@@ -263,7 +324,8 @@ class EvernoteDo():
         self.message("initializing..., please wait...")
 
         def __connect(token, noteStoreUrl):
-            if noteStoreUrl.startswith("https://"):
+            if noteStoreUrl.startswith("https://") and not ssl:
+                LOG("Not using SSL")
                 noteStoreUrl = "http://" + noteStoreUrl[8:]
             self.settings.set("token", token)
             self.settings.set("noteStoreUrl", noteStoreUrl)
@@ -272,7 +334,11 @@ class EvernoteDo():
 
         def __derive_note_store_url(token):
             id = self.get_shard_id(token)
-            url = "http://www.evernote.com/shard/" + id + "/notestore"
+            url = "www.evernote.com/shard/" + id + "/notestore"
+            if ssl:
+                url = "https://" + url
+            else:
+                url = "http://" + url
             return url
 
         def on_token(token):
@@ -537,6 +603,9 @@ class SendToEvernoteCommand(EvernoteDoText):
                 on_cancel()
 
         def __send_note(notebookGuid):
+            async_do(lambda: __send_note_async(notebookGuid), "Sending note")
+
+        def __send_note_async(notebookGuid):
             note.notebookGuid = notebookGuid
 
             LOG(note.title)
@@ -588,13 +657,14 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 self.view.settings().set("$evernote", True)
                 self.view.settings().set("$evernote_guid", cnote.guid)
                 self.view.settings().set("$evernote_title", cnote.title)
+                self.view.settings().set("$evernote_modified", self.view.change_count())
                 self.message("Successfully updated note: guid:%s" % cnote.guid)
                 self.update_status_info(cnote)
             except Exception as e:
                 if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                     self.connect(self.__update_note)
 
-        __update_note()
+        async_do(__update_note, "Updating note")
 
     def is_enabled(self):
         if self.view.settings().get("$evernote_guid", False):
@@ -640,6 +710,11 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     return
                 self.message('Retrieving note "%s"...' % notes[i].title)
                 self.open_note(notes[i].guid, **kwargs)
+
+            if len(notes) == 1 and self.settings.get("open_single_result"):
+                on_note(0)
+                return
+
             if show_notebook:
                 menu = ["[%s] » %s" % (self.notebook_from_guid(note.notebookGuid).name, note.title) for note in notes]
                 # menu = [[note.title, self.notebook_from_guid(note.notebookGuid).name] for note in notes]
@@ -652,12 +727,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 return
             search_args['notebookGuid'] = notebooks[notebook].guid
             notes = self.find_notes(search_args, max_notes)
-            sublime.set_timeout(lambda: notes_panel(notes), 0)
+            async_do(lambda: notes_panel(notes), "Fetching notes list")
 
         def do_search(query):
             self.message("Searching notes...")
             search_args['words'] = query
-            notes_panel(self.find_notes(search_args, max_notes), True)
+            async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list")
 
         if note_guid:
             self.open_note(note_guid, **kwargs)
@@ -667,11 +742,15 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             if isinstance(by_searching, str):
                 do_search(by_searching)
             else:
-                self.window.show_input_panel("Enter search query:", "", do_search, None, None)
+                p = self.window.show_input_panel("Enter search query:", "", do_search, None, None)
+                if isinstance(by_searching, dict):
+                    p.run_command("insert_snippet", {"contents": by_searching.get("snippet", "")})
             return
 
         if from_notebook or with_tags:
             notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
+        elif len(notebooks) == 1:
+            on_notebook(0)
         else:
             if self.settings.get("show_stacks", True):
                 menu = ["%s » %s" % (nb.stack, nb.name) if nb.stack else nb.name for nb in notebooks]
@@ -687,12 +766,13 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
+        async_do(lambda: self.do_open_note(guid, convert, **unk_args), "Retrieving note")
+
+    def do_open_note(self, guid, convert=True, **unk_args):
         try:
             noteStore = self.get_note_store()
             note = noteStore.getNote(self.token(), guid, True, False, False, False)
             nb_name = self.notebook_from_guid(note.notebookGuid).name
-            newview = self.window.new_file()
-            newview.set_scratch(True)
             LOG(note.content)
             LOG(note.guid)
             if convert:
@@ -718,18 +798,23 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     except Exception as e:
                         mdtxt = note.content
                         LOG("Conversion failed", e)
+                newview = self.window.new_file()
                 newview.settings().set("$evernote", True)
                 newview.settings().set("$evernote_guid", note.guid)
                 newview.settings().set("$evernote_title", note.title)
-                append_to_view(newview, meta+mdtxt)
                 syntax = self.md_syntax
+                note_contents = meta+mdtxt
             else:
+                newview = self.window.new_file()
                 syntax = find_syntax("XML")
-                append_to_view(newview, note.content)
+                note_contents = note.content
             newview.set_syntax_file(syntax)
+            newview.set_scratch(True)
+            append_to_view(newview, note_contents)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
+            newview.settings().set("$evernote_modified", newview.change_count())
         except Exception as e:
             sublime.error_message(explain_error(e))
 
@@ -787,8 +872,10 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
                 note.content = content[0:-10] + \
                     '<en-media type="%s" hash="%s"/></en-note>' % (mime, h.hexdigest())
             note.resources = resources
-            noteStore.updateNote(self.token(), note)
-            self.message("Successfully attached to note '%s'" % note.title)
+            def do():
+                noteStore.updateNote(self.token(), note)
+                self.message("Successfully attached to note '%s'" % note.title)
+            async_do(do, "Uploading attachment")
         except Exception as e:
             sublime.error_message(explain_error(e))
 
@@ -933,30 +1020,32 @@ class EvernoteInsertAttachment(EvernoteDoText):
                     explain_error(e))
                 return
 
-            try:
-                guid = self.view.settings().get("$evernote_guid")
-                noteStore = self.get_note_store()
-                note = noteStore.getNote(self.token(), guid, False, False, False, False)
-                mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-                h = hashlib.md5(filecontents)
-                attachment = Types.Resource(
-                    # noteGuid=guid,
-                    mime=mime,
-                    data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
-                    attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
-                resources = note.resources or []
-                resources.append(attachment)
-                note.resources = resources
-                self.message("Uploading attachment...")
-                noteStore.updateNote(self.token(), note)
-                if insert_in_content:
-                    view.insert(edit, view.sel()[0].a,
-                                '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest()))
-                    sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
-            except Exception as e:
-                sublime.error_message(
-                    "Evernote plugin cannot insert the attachment.\n" +
-                    explain_error(e))
+            def upload_async():
+                try:
+                    guid = self.view.settings().get("$evernote_guid")
+                    noteStore = self.get_note_store()
+                    note = noteStore.getNote(self.token(), guid, False, False, False, False)
+                    mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+                    h = hashlib.md5(filecontents)
+                    attachment = Types.Resource(
+                        # noteGuid=guid,
+                        mime=mime,
+                        data=Types.Data(body=filecontents, size=len(filecontents), bodyHash=h.digest()),
+                        attributes=Types.ResourceAttributes(attachment=not insert_in_content, **attr))
+                    resources = note.resources or []
+                    resources.append(attachment)
+                    note.resources = resources
+                    noteStore.updateNote(self.token(), note)
+                    if insert_in_content:
+                        tag = '<en-media type="%s" hash="%s"/>' % (mime, h.hexdigest())
+                        view.run_command('insert', {'characters': tag})
+                        sublime.set_timeout(lambda: view.run_command("save_evernote_note"), 10)
+                except Exception as e:
+                    sublime.error_message(
+                        "Evernote plugin cannot insert the attachment.\n" +
+                        explain_error(e))
+
+            async_do(upload_async, "Uploading attachment")
 
         def is_enabled(self):
             if self.view.settings().get("$evernote_guid", False):
@@ -991,9 +1080,9 @@ class EvernoteShowAttachments(EvernoteDoText):
                     for r in resources]
 
             def on_done(i):
-                sublime.set_timeout_async(lambda: on_done2(i), 10)
+                async_do(lambda: on_done_async(i), "Fetching Attachment")
 
-            def on_done2(i):
+            def on_done_async(i):
                 if i >= 0:
                     import tempfile, mimetypes
                     try:
@@ -1091,15 +1180,39 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
         if self.settings.get('update_on_save'):
             view.run_command("save_evernote_note")
 
+    def on_pre_close(self, view):
+        if self.settings.get("warn_on_close") and \
+           view and view.settings().get("$evernote") and \
+           view.change_count() > view.settings().get("$evernote_modified"):
+            # There is no API to cancel the closing of a view
+            # so we let Sublime close it but clone it first and then ask the user.
+            choices = ["Close and discard changes", "Save to Evernote and close"]
+            view.window().run_command("clone_file")
+            cloned = view.window().active_view()
+            if not cloned:
+                return
+
+            def on_choice(i):
+                if i == 1:
+                    cloned.run_command("save_evernote_note")
+                if i >= 0:
+                    cloned.settings().set("$evernote_modified", cloned.change_count())
+                    cloned.close()
+
+            cloned.window().show_quick_panel(choices, on_choice)
+
     def on_query_context(self, view, key, operator, operand, match_all):
-        if key != "evernote_note":
-            return None
-
-        res = view.settings().get("$evernote", False)
-        if (operator == sublime.OP_NOT_EQUAL) ^ (not operand):
-            res = not res
-
-        return res
+        if key == "evernote_note":
+            res = view.settings().get("$evernote", False)
+            if (operator == sublime.OP_NOT_EQUAL) ^ (not operand):
+                res = not res
+            return res
+        elif key == "evernote_has_guid":
+            res = bool(view.settings().get("$evernote_guid"))
+            if (operator == sublime.OP_NOT_EQUAL) ^ (not operand):
+                res = not res
+            return res
+        return None
 
     first_time = True
 

@@ -39,7 +39,7 @@ if sys.version_info[0] == 3:
     xrange = range
 
 # Use Unicode characters instead of their ascii psuedo-replacements
-UNICODE_SNOB = 0
+UNICODE_SNOB = 1
 
 # Escape all special characters.  Output is less readable, but avoids corner case formatting issues.
 ESCAPE_SNOB = 0
@@ -64,6 +64,10 @@ GOOGLE_LIST_INDENT = 36
 IGNORE_ANCHORS = False
 IGNORE_IMAGES = False
 IGNORE_EMPHASIS = False
+
+UL_ITEM_MARK = '*'
+EMPHASIS_MARK = '_'
+STRONG_MARK = '**'
 
 ### Entity Nonsense ###
 
@@ -207,9 +211,9 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.ignore_images = IGNORE_IMAGES
         self.ignore_emphasis = IGNORE_EMPHASIS
         self.google_doc = False
-        self.ul_item_mark = '*'
-        self.emphasis_mark = '_'
-        self.strong_mark = '**'
+        self.ul_item_mark = UL_ITEM_MARK
+        self.emphasis_mark = EMPHASIS_MARK
+        self.strong_mark = STRONG_MARK
 
         if out is None:
             self.out = self.outtextf
@@ -254,6 +258,7 @@ class HTML2Text(HTMLParser.HTMLParser):
         self.abbr_data = None  # last inner HTML (for abbr being defined)
         self.abbr_list = {}  # stack of abbreviations to write later
         self.baseurl = baseurl
+        self.span_stack = []
 
         try: del unifiable_n[name2cp('nbsp')]
         except KeyError: pass
@@ -281,7 +286,7 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         self.outtext = self.outtext.join(self.outtextlist)
         if self.unicode_snob:
-            nbsp = unichr(name2cp('nbsp'))
+            nbsp = chr(name2cp('nbsp'))
         else:
             nbsp = u' '
         self.outtext = self.outtext.replace(u'&nbsp_place_holder;', nbsp)
@@ -498,11 +503,39 @@ class HTML2Text(HTMLParser.HTMLParser):
 
         if tag in ['em', 'i', 'u'] and not self.ignore_emphasis: self.o(self.emphasis_mark)
         if tag in ['strong', 'b'] and not self.ignore_emphasis: self.o(self.strong_mark)
-        if tag in ['del', 'strike', 's', 'kbd']:
+
+        if tag == 'kbd':
             if start:
                 self.o("<"+tag+">")
             else:
                 self.o("</"+tag+">")
+
+        if tag in ['del', 'strike', 's']:
+            self.o("~~")
+
+        if tag in ['ins', 'u']:
+            self.o("==")
+
+        # evernote strikethrough and underlined
+        if tag == "span":
+            if start:
+                style = attrs.get('style')
+                if style == "text-decoration: line-through;":
+                    self.span_stack.append("strike")
+                    self.o("~~")
+                elif style == "text-decoration: underline;":
+                    self.span_stack.append("underline")
+                    # self.o('<span style="text-decoration: underline;">')
+                    self.o('==')
+                else:
+                    self.span_stack.append(False)
+            else:
+                style = self.span_stack.pop()
+                if style == "strike":
+                    self.o("~~")
+                elif style == "underline":
+                    # self.o('</span>')
+                    self.o('==')
 
         if self.google_doc:
             if not self.inheader:
@@ -801,7 +834,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             return unifiable_n[c]
         else:
             try:
-                return unichr(c)
+                return chr(c)
             except NameError: #Python3
                 return chr(c)
 
@@ -813,7 +846,7 @@ class HTML2Text(HTMLParser.HTMLParser):
             except KeyError: return "&" + c + ';'
             else:
                 try:
-                    return unichr(name2cp(c))
+                    return chr(name2cp(c))
                 except NameError: #Python3
                     return chr(name2cp(c))
 

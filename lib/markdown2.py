@@ -73,6 +73,9 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 * toc: The returned HTML string gets a new "toc_html" attribute which is
   a Table of Contents for the document. (experimental)
 * xml: Passes one-liner processing instructions and namespaced XML tags.
+* tables: Tables using the same format as GFM
+  <https://help.github.com/articles/github-flavored-markdown#tables> and
+  PHP-Markdown Extra <https://michelf.ca/projects/php-markdown/extra/#table>.
 * wiki-tables: Google Code Wiki-style tables. See
   <http://code.google.com/p/support/wiki/WikiSyntax#Tables>.
 """
@@ -82,13 +85,12 @@ see <https://github.com/trentm/python-markdown2/wiki/Extras> for details):
 #   not yet sure if there implications with this. Compare 'pydoc sre'
 #   and 'perldoc perlre'.
 
-__version_info__ = (2, 2, 1)
+__version_info__ = (2, 3, 0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = "Trent Mick"
 
 import os
 import sys
-from pprint import pprint
 import re
 import logging
 try:
@@ -308,7 +310,7 @@ class Markdown(object):
 
         text = self.preprocess(text)
 
-        if "fenced-code-blocks" in self.extras:
+        if "fenced-code-blocks" in self.extras and not self.safe_mode:
             text = self._do_fenced_code_blocks(text)
 
         if self.safe_mode:
@@ -316,6 +318,9 @@ class Markdown(object):
 
         # Turn block-level HTML blocks into hash entries
         text = self._hash_html_blocks(text, raw=True)
+
+        if "fenced-code-blocks" in self.extras and self.safe_mode:
+            text = self._do_fenced_code_blocks(text)
 
         # Strip link definitions, store in hashes.
         if "footnotes" in self.extras:
@@ -816,6 +821,8 @@ class Markdown(object):
             text = self._prepare_pyshell_blocks(text)
         if "wiki-tables" in self.extras:
             text = self._do_wiki_tables(text)
+        if "tables" in self.extras:
+            text = self._do_tables(text)
 
         text = self._do_code_blocks(text)
 
@@ -856,15 +863,92 @@ class Markdown(object):
 
         return _pyshell_block_re.sub(self._pyshell_block_sub, text)
 
+    def _table_sub(self, match):
+        head, underline, body = match.groups()
+
+        table_style = self._html_class_str_from_tag("table")
+        td_style =  self._html_class_str_from_tag("td")
+        th_style =  self._html_class_str_from_tag("th")
+        tr_style =  self._html_class_str_from_tag("tr")
+        tr_odd_style =  self._html_class_str_from_tag("tr:odd")
+        tr_even_style =  self._html_class_str_from_tag("tr:even")
+
+        # Determine aligns for columns.
+        cols = [cell.strip() for cell in underline.strip('| \t\n').split('|')]
+        align_from_col_idx = {}
+        for col_idx, col in enumerate(cols):
+            if col[0] == ':' and col[-1] == ':':
+                align_from_col_idx[col_idx] = ' align="center"'
+            elif col[0] == ':':
+                align_from_col_idx[col_idx] = ' align="left"'
+            elif col[-1] == ':':
+                align_from_col_idx[col_idx] = ' align="right"'
+
+        # thead
+        hlines = ['<table%s>' % table_style, '<thead>', '<tr%s>' % tr_style]
+        cols = [cell.strip() for cell in head.strip('| \t\n').split('|')]
+        for col_idx, col in enumerate(cols):
+            hlines.append('  <th%s%s>%s</th>' % (
+                align_from_col_idx.get(col_idx, ''),
+                th_style,
+                self._run_span_gamut(col)
+            ))
+        hlines.append('</tr>')
+        hlines.append('</thead>')
+
+        # tbody
+        hlines.append('<tbody>')
+        for i, line in enumerate(body.strip('\n').split('\n')):
+            hlines.append('<tr%s%s>' % (tr_style, tr_even_style if i % 2 else tr_odd_style))
+            cols = [cell.strip() for cell in line.strip('| \t\n').split('|')]
+            for col_idx, col in enumerate(cols):
+                hlines.append('  <td%s%s>%s</td>' % (
+                    align_from_col_idx.get(col_idx, ''),
+                    td_style,
+                    self._run_span_gamut(col)
+                ))
+            hlines.append('</tr>')
+        hlines.append('</tbody>')
+        hlines.append('</table>')
+
+        return '\n'.join(hlines) + '\n'
+
+    def _do_tables(self, text):
+        """Copying PHP-Markdown and GFM table syntax. Some regex borrowed from
+        https://github.com/michelf/php-markdown/blob/lib/Michelf/Markdown.php#L2538
+        """
+        less_than_tab = self.tab_width - 1
+        table_re = re.compile(r'''
+                (?:(?<=\n\n)|\A\n?)             # leading blank line
+
+                ^[ ]{0,%d}                      # allowed whitespace
+                (.*[|].*)  \n                   # $1: header row (at least one pipe)
+
+                ^[ ]{0,%d}                      # allowed whitespace
+                (                               # $2: underline row
+                    # underline row with leading bar
+                    (?:  \|\ *:?-+:?\ *  )+  \|?  \n
+                    |
+                    # or, underline row without leading bar
+                    (?:  \ *:?-+:?\ *\|  )+  (?:  \ *:?-+:?\ *  )?  \n
+                )
+
+                (                               # $3: data rows
+                    (?:
+                        ^[ ]{0,%d}(?!\ )         # ensure line begins with 0 to less_than_tab spaces
+                        .*\|.*  \n
+                    )+
+                )
+            ''' % (less_than_tab, less_than_tab, less_than_tab), re.M | re.X)
+        return table_re.sub(self._table_sub, text)
+
     def _wiki_table_sub(self, match):
         ttext = match.group(0).strip()
-        #print 'wiki table: %r' % match.group(0)
         rows = []
         for line in ttext.splitlines(0):
             line = line.strip()[2:-2].strip()
             row = [c.strip() for c in re.split(r'(?<!\\)\|\|', line)]
             rows.append(row)
-        #pprint(rows)
         table_style = self._html_class_str_from_tag("table")
         td_style =  self._html_class_str_from_tag("td")
         tr_style =  self._html_class_str_from_tag("tr")
@@ -1635,7 +1719,7 @@ class Markdown(object):
     def _code_span_sub(self, match):
         c = match.group(2).strip(" \t")
         c = self._encode_code(c)
-        return "<code>%s</code>" % c
+        return "<code%s>%s</code>" % (self._html_class_str_from_tag("inline-code"), c)
 
     def _do_code_spans(self, text):
         #   *   Backtick quotes are used for <code></code> spans.
@@ -1683,6 +1767,8 @@ class Markdown(object):
 
     _strong_re = re.compile(r"(\*\*|__)(?=\S)(.+?[*_]*)(?<=\S)\1", re.S)
     _em_re = re.compile(r"(\*|_)(?=\S)(.+?)(?<=\S)\1", re.S)
+    _strike_re = re.compile(r"~~(?=\S)(.+?)(?<=\S)~~", re.S)
+    _underline_re = re.compile(r"==(?=\S)(.+?)(?<=\S)==", re.S)
     _code_friendly_strong_re = re.compile(r"\*\*(?=\S)(.+?[*_]*)(?<=\S)\*\*", re.S)
     _code_friendly_em_re = re.compile(r"\*(?=\S)(.+?)(?<=\S)\*", re.S)
     def _do_italics_and_bold(self, text):
@@ -1693,6 +1779,11 @@ class Markdown(object):
         else:
             text = self._strong_re.sub(r"<strong>\2</strong>", text)
             text = self._em_re.sub(r"<em>\2</em>", text)
+        # text = self._strike_re.sub(r"<del>\1</del>", text)  # GFM way
+        # text = self._strike_re.sub(r'<span style="text-decoration: line-through;">\1</span>', text)  # Evernote way
+        # text = self._underline_re.sub(r'<span style="text-decoration: underline;">\1</span>', text)  # Evernote way
+        text = self._strike_re.sub(r'<strike>\1</strike>', text)
+        text = self._underline_re.sub(r'<u>\1</u>', text)
         return text
 
     # "smarty-pants" extra: Very liberal in interpreting a single prime as an

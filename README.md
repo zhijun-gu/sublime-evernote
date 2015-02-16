@@ -1,11 +1,21 @@
 Evernote for Sublime Text
 =========================
 
+[![release badge]][release]
+[![licence badge]][licence]
+[![stars badge]][repo]
+[![issues badge]][issues]
+[![tips badge]][gratipay]
+[![paypal badge]][paypal]
+[![chat badge]][gitter]
+
 [Sublime Text](http://www.sublimetext.com/3) plugin for [Evernote](http://www.evernote.com).
 
 This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
 To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>). See [First Use](#first-use) for linking the plugin to your account.
+
+If you like this plugin and would like to support its development please consider donating through a [paypal donation][paypal] or using [gratipay].
 
 # Main Features
 
@@ -21,43 +31,46 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.6.0**
+
+ + Asynchronous operations: save/update/load from server does not block the UI 
+ + Warn on close if modified but not uploaded (`warn_on_close` setting)
+ + Added support for GFM tables syntax (#51, #58)
+ + Added support for strikethrough (#38)
+ + Added support for underline (see [special syntax][wiki-md])
+ + Settings for default emphasis/unordered list marks
+ + Better support for Unicode (#52) 
+ + CSS styling for inline code fixed (#53)
+ + Support for HTTPS for Package Control v3 users ([see wiki][wiki])
+ + If search has one result open it directly (#65)
+ + Added `evernote_has_guid` context key
+ + Search command now supports snippets for prompt (#54)
+
 **v2.5.4**
 
  + Bugfix: solves a problem in setting a new token (see #48)
  + Added a `debug` flag in settings
 
-**v2.5.3**
+For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
 
- + Added links to notes management (thanks to @rahul-ramadas, see #36)
- + Open note in Client command, tested on Windows only (thanks to @rahul-ramadas)
- + Bugfixes: better error messages, correct handling of unnamed attachments
-
-**v2.5.2**
-
- + Added attachments management: list, open, insert attachments from file or url (solves #24)
- + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
- + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
- + Now notes in webapp are opened in default browser (solves #22)
- + Configuration asks for noteStoreUrl so the plugin works properly for yinxiang.com (solves #20)
-
-**v2.5.1**
-
- + Bugfix: metadata autocomplete now loads settings correctly 
-
-**v2.5.0**
-
- + [Search note](#search-note) command added
- + [Attach](#attach-to-note) command added
- + [Clip](#clip-to-note) command added
- + [View in WebApp](#view-note-in-webapp) command added
- + Autocomplete in metadata block
- + Unicode chars in tags properly displayed
- + Creation and update dates are displayed in status
 
 # Installation
 
 The Evernote plugin can be installed using Package Control.
 See the [wiki] for detailed instructions.
+
+# Issues
+
+You may encounter problems in using the plugin.
+Issues can be posted at the [github repository][issues].
+
+Before posting a new issue:
+
+  1. Enable the `debug` setting in your `Evernote.sublime-settings` file and try again.
+  If the problem persists take a note of the output in the console.
+  Make sure you delete personal information (e.g. Developer Token) from the output before posting it in an issue.
+  2. Check the [wiki]
+  3. Search for similar issues [here](https://github.com/bordaigorl/sublime-evernote/issues?q=is%3Aissue)
 
 # Usage
 
@@ -90,8 +103,8 @@ The plugin does not install keymaps, if you wish you may add a variation of the 
 you can also overwrite the standard "save" bindings for Evernote notes as follows:
 
 ```
-{ "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}] },
-{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "evernote_note", "operator": "equal", "operand": false}, {"key": "selector", "operator": "equal", "operand": "text.html.markdown.evernote"}] },
+{ "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}, {"key": "evernote_has_guid"}] },
+{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "evernote_note"}, {"key": "evernote_has_guid", "operator": "equal", "operand": false}] },
 ```
 
 you would still be able to save the note as a file by using the `File > Save` menu. 
@@ -184,7 +197,7 @@ This command will open the currently opened note in your local Evernote client, 
 
 You can use Markdown to write notes but there are some limitations due to Evernote's formats. For example, `class` and `id` are forbidden attributes in Evernote notes so the Markdown converter has been modified to never output them and raw HTML cannot contain them. If you write illegal content the plugin will display a dialog showing the reason why Evernote is complaining.
 
-Please see the [wiki documentation](https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown) for more details.
+Please see the [wiki documentation][wiki-md] for more details.
 
 ## Metadata
 
@@ -221,15 +234,22 @@ The following settings can be customised:
 Setting                   | Purpose
 --------------------------|------------------------
 `md_syntax`               | a string pointing to a `tmLanguage` file which you want to associate with notes opened from Evernote.
-`inline_css`              | a dictionary associating some HTML element names to inline CSS styles; currently the only elements that can be styled in this way are: `pre`, `code`, `h1`, `hr`, `blockquote` and `sup`. Additionally `footnotes` can be associated to some style for the `div` containing the footnotes at the end of the note. The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed). See [here](http://dev.evernote.com/doc/articles/enml.php) for details.
+`inline_css`              | a dictionary associating some HTML element names to inline CSS styles; this setting is documented in the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Styling). The markdown of a note can contain (almost) arbitrary HTML blocks *but* Evernote only accepts a subset of the elements and attributes (`class` and `id` are disallowed). See [here](http://dev.evernote.com/doc/articles/enml.php) for details.
 `code_highlighting_style` | a pygments style among `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`, `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
 `code_friendly`           | if `true` the `code-friendly` extra of markdown2 is enabled
 `evernote_autocomplete`   | when this setting is true, suggestions will be offered for autocompletion of the `notebook` and `tags` fields in metadata. Default is true.
+`emphasis_mark`           | when converting from HTML to markdown, use this as emphasis markup. Valid values are `"*"` or `"_"` (default). It is set to `"*"` when `code_friendly` is true.
+`strong_mark`             | when converting from HTML to markdown, use this as emphasis markup. Valid values are `"__"` or `"**"` (default)
+`item_mark`               | when converting from HTML to markdown, use this as unordered list item markup. Valid values are `"+"`, `"-"` or `"*"` (default)
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
 `sort_notebooks`          | sorts notebooks alphabetically in pallette
 `show_stacks`             | shows the stack of notebooks in pallette
+`open_single_result`      | when a search returns only one note open it directly skipping the results pallette (defaults to `true`)
+`warn_on_close`           | when closing a modified note without saving to Evernote, offer a choice to save or discard changes (defaults to `true`)
+`gfm_tables`              | enable GFM table syntax (default `true`)
+`wiki_tables`             | enable Wiki table syntax (default `false`)
 `debug`                   | enables logging in the console
 
 
@@ -237,7 +257,7 @@ Setting                   | Purpose
 
 The current maintainer is [bordaigorl].
 
-If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gittip](https://www.gittip.com/bordaigorl/).
+If you like this plugin and would like to support its development please consider donating through a [paypal donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ) or using [gratipay].
 
 If you would like to contribute, please see [CONTRIBUTING].
 
@@ -261,6 +281,8 @@ The plugin has been made possible by the contribution of several people:
 
 If you think your name should be here, let us know!
 
+Also thanks to our first donor, Matthew Baltrusitis! 
+
 Libraries (some adapted to work with Evernote formats):
 
  * Markdown2 converter: [trentm](https://github.com/trentm/python-markdown2/)
@@ -270,4 +292,21 @@ Libraries (some adapted to work with Evernote formats):
 
 [CONTRIBUTING]: <CONTRIBUTING.md>
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
+[wiki-md]: <https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown>
 [bordaigorl]: <https://github.com/bordaigorl>
+[gratipay]: <https://gratipay.com/bordaigorl/>
+[paypal]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
+[gitter]: <https://gitter.im/bordaigorl/sublime-evernote>
+[release]: <https://github.com/bordaigorl/sublime-evernote/releases>
+[licence]: <https://raw.githubusercontent.com/bordaigorl/sublime-evernote/master/LICENSE>
+[issues]: <https://github.com/bordaigorl/sublime-evernote/issues>
+[repo]: <https://github.com/bordaigorl/sublime-evernote/>
+
+[release badge]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
+[licence badge]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
+[stars badge]: https://img.shields.io/github/stars/bordaigorl/sublime-evernote.svg
+[issues badge]: https://img.shields.io/github/issues/bordaigorl/sublime-evernote.svg
+[tips badge]: https://img.shields.io/gratipay/bordaigorl.svg
+[chat badge]: https://img.shields.io/badge/gitter-join%20chat-green.svg
+[paypal badge]: https://img.shields.io/badge/paypal-donate-blue.svg
+

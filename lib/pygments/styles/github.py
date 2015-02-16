@@ -25,7 +25,7 @@ class GithubStyle(Style):
 
     default_style = ''
 
-    background_color = '#ffffff'
+    background_color = '#f8f8f8'
 
     styles = {
         Comment.Multiline:              'italic #999988',

@@ -1,0 +1,30 @@
+What's new in v2.6.0
+====================
+
+If you like this plugin and would like to support its development please consider donating through a [paypal donation] or using [gratipay].
+
+Check out the [wiki] for documentation. There is also a [gitter] chat room for additional support. 
+
+If you already switched to Package Control 3 then you can use HTTPS in your `notestoreUrl`, see the [wiki] for details.
+
++ Asynchronous operations: save/update/load from server does not block the UI 
++ Warn on close if modified but not uploaded (`warn_on_close` setting)
++ Added support for GFM tables syntax (#51, #58)
++ Added support for strikethrough (#38)
++ Added support for underline (see [special syntax])
++ Settings for default emphasis/unordered list marks
++ Better support for Unicode (#52) 
++ CSS styling for inline code fixed (#53)
++ Support for HTTPS for Package Control v3 users (see [wiki])
++ If search has one result open it directly (#65)
++ Added `evernote_has_guid` context key
++ Search command now supports snippets for prompt (#54)
+
+
+[paypal donation]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
+[gratipay]: <https://gratipay.com/bordaigorl/>
+
+[wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
+[gitter]: <https://gitter.im/bordaigorl/sublime-evernote>
+[special syntax]: <https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown>
+
