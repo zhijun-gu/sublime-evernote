@@ -51,33 +51,8 @@ See [Commands](#commands) and the [wiki] for details.
  + Bugfix: solves a problem in setting a new token (see #48)
  + Added a `debug` flag in settings
 
-**v2.5.3**
+For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
 
- + Added links to notes management (thanks to @rahul-ramadas, see #36)
- + Open note in Client command, tested on Windows only (thanks to @rahul-ramadas)
- + Bugfixes: better error messages, correct handling of unnamed attachments
-
-**v2.5.2**
-
- + Added attachments management: list, open, insert attachments from file or url (solves #24)
- + Notebook list can show stack names and be sorted (#30, thanks @danielfrg)
- + Added `wiki_tables` setting to enable Wiki-style tables syntax (solves #18)
- + Now notes in webapp are opened in default browser (solves #22)
- + Configuration asks for noteStoreUrl so the plugin works properly for yinxiang.com (solves #20)
-
-**v2.5.1**
-
- + Bugfix: metadata autocomplete now loads settings correctly 
-
-**v2.5.0**
-
- + [Search note](#search-note) command added
- + [Attach](#attach-to-note) command added
- + [Clip](#clip-to-note) command added
- + [View in WebApp](#view-note-in-webapp) command added
- + Autocomplete in metadata block
- + Unicode chars in tags properly displayed
- + Creation and update dates are displayed in status
 
 # Installation
 
