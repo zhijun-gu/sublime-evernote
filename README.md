@@ -299,6 +299,7 @@ Libraries (some adapted to work with Evernote formats):
 [gitter]: <https://gitter.im/bordaigorl/sublime-evernote>
 [release]: <https://github.com/bordaigorl/sublime-evernote/releases>
 [licence]: <https://raw.githubusercontent.com/bordaigorl/sublime-evernote/master/LICENSE>
+[issues]: <https://github.com/bordaigorl/sublime-evernote/issues>
 [repo]: <https://github.com/bordaigorl/sublime-evernote/>
 
 [release badge]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
