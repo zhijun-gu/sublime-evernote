@@ -44,6 +44,7 @@ See [Commands](#commands) and the [wiki] for details.
  + Support for HTTPS for Package Control v3 users ([see wiki][wiki])
  + If search has one result open it directly (#65)
  + Added `evernote_has_guid` context key
+ + Search command now supports snippets for prompt (#54)
 
 **v2.5.4**
 
@@ -270,6 +271,7 @@ Setting                   | Purpose
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
 `sort_notebooks`          | sorts notebooks alphabetically in pallette
 `show_stacks`             | shows the stack of notebooks in pallette
+`open_single_result`      | when a search returns only one note open it directly skipping the results pallette (defaults to `true`)
 `warn_on_close`           | when closing a modified note without saving to Evernote, offer a choice to save or discard changes (defaults to `true`)
 `gfm_tables`              | enable GFM table syntax (default `true`)
 `wiki_tables`             | enable Wiki table syntax (default `false`)
