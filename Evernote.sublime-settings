@@ -21,5 +21,6 @@
     "notes_order": "updated",
     "evernote_autocomplete": true,
     "sort_notebooks": false,
-    "show_stacks": true
+    "show_stacks": true,
+    "warn_on_close": true
 }

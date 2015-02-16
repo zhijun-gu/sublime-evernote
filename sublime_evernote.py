@@ -1181,7 +1181,9 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
             view.run_command("save_evernote_note")
 
     def on_pre_close(self, view):
-        if view and view.settings().get("$evernote") and view.change_count() > view.settings().get("$evernote_modified"):
+        if self.settings.get("warn_on_close") and
+           view and view.settings().get("$evernote") and
+           view.change_count() > view.settings().get("$evernote_modified"):
             # There is no API to cancel the closing of a view
             # so we let Sublime close it but clone it first and then ask the user.
             choices = ["Close and discard changes", "Save to Evernote and close"]
