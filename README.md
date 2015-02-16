@@ -31,6 +31,20 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.6.0**
+
+ + Asynchronous operations: save/update/load from server does not block the UI 
+ + Warn on close if modified but not uploaded (`warn_on_close` setting)
+ + Added support for GFM tables syntax (#51, #58)
+ + Added support for strikethrough (#38)
+ + Added support for underline (see [special syntax][wiki-md])
+ + Settings for default emphasis/unordered list marks
+ + Better support for Unicode (#52) 
+ + CSS styling for inline code fixed (#53)
+ + Support for HTTPS for Package Control v3 users ([see wiki][wiki])
+ + If search has one result open it directly (#65)
+ + Added `evernote_has_guid` context key
+
 **v2.5.4**
 
  + Bugfix: solves a problem in setting a new token (see #48)
@@ -113,8 +127,8 @@ The plugin does not install keymaps, if you wish you may add a variation of the 
 you can also overwrite the standard "save" bindings for Evernote notes as follows:
 
 ```
-{ "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}] },
-{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "evernote_note", "operator": "equal", "operand": false}, {"key": "selector", "operator": "equal", "operand": "text.html.markdown.evernote"}] },
+{ "keys": ["ctrl+s"], "command": "save_evernote_note", "context": [{"key": "evernote_note"}, {"key": "evernote_has_guid"}] },
+{ "keys": ["ctrl+s"], "command": "send_to_evernote", "context": [{"key": "evernote_note"}, {"key": "evernote_has_guid", "operator": "equal", "operand": false}] },
 ```
 
 you would still be able to save the note as a file by using the `File > Save` menu. 
@@ -207,7 +221,7 @@ This command will open the currently opened note in your local Evernote client, 
 
 You can use Markdown to write notes but there are some limitations due to Evernote's formats. For example, `class` and `id` are forbidden attributes in Evernote notes so the Markdown converter has been modified to never output them and raw HTML cannot contain them. If you write illegal content the plugin will display a dialog showing the reason why Evernote is complaining.
 
-Please see the [wiki documentation](https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown) for more details.
+Please see the [wiki documentation][wiki-md] for more details.
 
 ## Metadata
 
@@ -301,6 +315,7 @@ Libraries (some adapted to work with Evernote formats):
 
 [CONTRIBUTING]: <CONTRIBUTING.md>
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
+[wiki-md]: <https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown>
 [bordaigorl]: <https://github.com/bordaigorl>
 [gratipay]: <https://gratipay.com/bordaigorl/>
 [paypal]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
