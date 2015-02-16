@@ -3,6 +3,7 @@
  * update `EVERNOTE_PLUGIN_VERSION`
  * check `DEBUG` is `False`
  * update Changelog in Readme
+ * add update message to `messages` and `messages.json`
  * update Contributors in Readme if needed
  * update wiki if needed
  * add release on GitHub with release notes from Readme
