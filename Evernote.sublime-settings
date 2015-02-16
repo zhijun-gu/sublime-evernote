@@ -1,4 +1,5 @@
 {
+    // inline_css is documented at https://github.com/bordaigorl/sublime-evernote/wiki/Styling
     "inline_css": {
         "pre": "color: #000000; font-family: monospace,monospace; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #cccccc; border-radius: 3px; overflow: auto; padding: 6px 10px; margin-bottom: 10px;",
         "code": "color: black; font-family: monospace,monospace; font-size: 0.9em;",
@@ -8,7 +9,7 @@
         "hr": "color:#9AB39B;background-color:#9AB39B;height:1px;border:none;",
         "sup": "color:#6D6D6D;font-size:1ex",
         "blockquote": "border-left: .5ex solid #BFBFBF; margin-left: 0px; padding-left: 1em; margin-top: 1.4285em; margin-bottom: 1.4285em;",
-        // ONLY USED IF wiki_tables = true
+        // ONLY USED IF wiki_tables or gfm_tables are enabled
         "table": "border-collapse: collapse; border-spacing: 0; margin: 1em;",
         "td": "border: 1px solid #DDD; padding: 6px 13px;",
         "th": "border: 1px solid #DDD; padding: 6px 13px;",
