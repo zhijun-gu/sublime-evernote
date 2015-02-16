@@ -3,7 +3,7 @@ Evernote for Sublime Text
 
 [![release badge]][release]
 [![licence badge]][licence]
-[![stars badge]][stars]
+[![stars badge]][repo]
 [![issues badge]][issues]
 [![tips badge]][gratipay]
 [![paypal badge]][paypal]
@@ -248,11 +248,17 @@ Setting                   | Purpose
 `code_highlighting_style` | a pygments style among `autumn`, `default`, `github`, `monokai`, `perldoc`, `vim`, `borland`, `emacs`, `igor`, `murphy`, `rrt`, `vs`,   `bw`, `friendly`, `native`, `tango`, `xcode`,   `colorful`, `fruity`, `manni`, `pastie`, `trac`.
 `code_friendly`           | if `true` the `code-friendly` extra of markdown2 is enabled
 `evernote_autocomplete`   | when this setting is true, suggestions will be offered for autocompletion of the `notebook` and `tags` fields in metadata. Default is true.
+`emphasis_mark`           | when converting from HTML to markdown, use this as emphasis markup. Valid values are `"*"` or `"_"` (default). It is set to `"*"` when `code_friendly` is true.
+`strong_mark`             | when converting from HTML to markdown, use this as emphasis markup. Valid values are `"__"` or `"**"` (default)
+`item_mark`               | when converting from HTML to markdown, use this as unordered list item markup. Valid values are `"+"`, `"-"` or `"*"` (default)
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
 `sort_notebooks`          | sorts notebooks alphabetically in pallette
 `show_stacks`             | shows the stack of notebooks in pallette
+`warn_on_close`           | when closing a modified note without saving to Evernote, offer a choice to save or discard changes (defaults to `true`)
+`gfm_tables`              | enable GFM table syntax (default `true`)
+`wiki_tables`             | enable Wiki table syntax (default `false`)
 `debug`                   | enables logging in the console
 
 
@@ -301,7 +307,7 @@ Libraries (some adapted to work with Evernote formats):
 [gitter]: <https://gitter.im/bordaigorl/sublime-evernote>
 [release]: <https://github.com/bordaigorl/sublime-evernote/releases>
 [licence]: <https://raw.githubusercontent.com/bordaigorl/sublime-evernote/master/LICENSE>
-[stars]: <https://github.com/bordaigorl/sublime-evernote/>
+[repo]: <https://github.com/bordaigorl/sublime-evernote/>
 
 [release badge]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
 [licence badge]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
