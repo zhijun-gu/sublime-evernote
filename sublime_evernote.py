@@ -711,7 +711,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 self.message('Retrieving note "%s"...' % notes[i].title)
                 self.open_note(notes[i].guid, **kwargs)
 
-            if len(notes) == 1:
+            if len(notes) == 1 and self.settings.get("open_single_result"):
                 on_note(0)
                 return
 
