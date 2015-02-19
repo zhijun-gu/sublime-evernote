@@ -13,7 +13,8 @@ Evernote for Sublime Text
 
 This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
-To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>). See [First Use](#first-use) for linking the plugin to your account.
+To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>).
+See [First Use](https://github.com/bordaigorl/sublime-evernote#first-use) for linking the plugin to your account.
 
 If you like this plugin and would like to support its development please consider donating through a [paypal donation][paypal] or using [gratipay].
 
