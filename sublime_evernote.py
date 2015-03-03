@@ -666,7 +666,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
 
         async_do(__update_note, "Updating note")
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         if self.view.settings().get("$evernote_guid", False):
             return True
         return False
@@ -893,7 +893,7 @@ class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
         mdlink = '[{}]({})'.format(title, link)
         insert_to_view(self.view, mdlink)
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         return bool(self.window.active_view().settings().get('$evernote', False))
 
 
@@ -943,7 +943,7 @@ class OpenLinkedEvernoteNote(EvernoteDoText):
     def is_visible(self):
         return bool(self.view.settings().get('$evernote', False))
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         return (self.view.settings().get('$evernote', False) and
                 self.find_note_link_guid() is not None)
 
@@ -971,7 +971,7 @@ class ListLinkedEvernoteNotes(EvernoteDoText):
 
         self.view.window().show_quick_panel(linktitles, open_link)
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         return bool(self.view.settings().get('$evernote', False))
 
 
@@ -982,7 +982,7 @@ class ViewInEvernoteClientCommand(EvernoteDoText):
         LOG('Launching Evernote client with link', notelink)
         open_file_with_app(notelink)
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         return bool(self.view.settings().get("$evernote_guid", False))
 
 
@@ -1047,7 +1047,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
 
             async_do(upload_async, "Uploading attachment")
 
-        def is_enabled(self):
+        def is_enabled(self, **kw):
             if self.view.settings().get("$evernote_guid", False):
                 return True
             return False
@@ -1110,7 +1110,7 @@ class EvernoteShowAttachments(EvernoteDoText):
             else:
                 self.message("Note has no attachments")
 
-        def is_enabled(self):
+        def is_enabled(self, **kw):
             if self.view.settings().get("$evernote_guid", False):
                 return True
             return False
@@ -1122,7 +1122,7 @@ class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
         url = self.view.settings().get("noteStoreUrl")[0:-9] + "view/%s"
         webbrowser.open_new_tab(url % self.view.settings().get("$evernote_guid"))
 
-    def is_enabled(self):
+    def is_enabled(self, **kw):
         if self.view.settings().get("$evernote_guid", False):
             return True
         return False
