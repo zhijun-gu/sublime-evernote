@@ -441,8 +441,8 @@ class EvernoteDo():
         body_wrapper = '<div style="%s">\n%s\n</div>'
         wrapper_style = ''
         if 'inline-css' in EvernoteDo.MD_EXTRAS:
-            if 'body_wrapper' in EvernoteDo.MD_EXTRAS['inline-css']:
-                wrapper_style = EvernoteDo.MD_EXTRAS['inline-css']['body_wrapper']
+            if 'body' in EvernoteDo.MD_EXTRAS['inline-css']:
+                wrapper_style = EvernoteDo.MD_EXTRAS['inline-css']['body']
         body_with_wrapper = body_wrapper % (wrapper_style, body)
 
         meta = body.metadata or {}
