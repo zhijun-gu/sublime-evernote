@@ -618,6 +618,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                     view.settings().set("$evernote", True)
                     view.settings().set("$evernote_guid", cnote.guid)
                     view.settings().set("$evernote_title", cnote.title)
+                    view.settings().set("$evernote_modified", view.change_count())
                     view.set_syntax_file(self.md_syntax)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
                 self.update_status_info(cnote)
