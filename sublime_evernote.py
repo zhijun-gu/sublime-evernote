@@ -989,12 +989,12 @@ class ViewInEvernoteClientCommand(EvernoteDoText):
         return bool(self.view.settings().get("$evernote_guid", False))
 
 
-class SyncFromEvernoteCommand(OpenEvernoteNoteCommand):
+class RevertToEvernoteCommand(OpenEvernoteNoteCommand):
 
     def do_run(self, **kwargs):
         open_new_file = False
         if self.view.change_count() > self.view.settings().get("$evernote_modified"):
-            answer = sublime.yes_no_cancel_dialog("Note has been modified and syncing from Evernote will replace it's contents. Do you want to replace?", "Replace", "Open in new tab")
+            answer = sublime.yes_no_cancel_dialog("Note has been modified and reverting to version from Evernote will replace it's contents. Do you want to replace?", "Replace", "Open in new tab")
             if answer == sublime.DIALOG_NO:
                 open_new_file = True
             elif answer == sublime.DIALOG_CANCEL:
@@ -1002,7 +1002,7 @@ class SyncFromEvernoteCommand(OpenEvernoteNoteCommand):
 
         note_guid = self.view.settings().get("$evernote_guid")
         self.open_note(note_guid, open_new_file=open_new_file, **kwargs)
-        self.message("Syncing note, please wait...")
+        self.message("Loading note, please wait...")
 
     def is_enabled(self):
         if self.window.active_view().settings().get("$evernote_guid", False):
