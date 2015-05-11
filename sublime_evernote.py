@@ -78,19 +78,17 @@ def metadata_header(title="", tags=[], notebook="", **kw):
     return METADATA_HEADER % (title, json.dumps(tags, ensure_ascii=False), notebook)
 
 
-def append_to_view(view, text):
-    view.run_command('append', {
-        'characters': text,
-    })
-    return view
-
-
 def insert_to_view(view, text):
     view.run_command('insert', {
         'characters': text,
     })
     return view
 
+def replace_view_text(view, text):
+    view.run_command('replace_view_text', {
+        'characters': text
+    })
+    return view
 
 def find_syntax(lang, default=None):
     res = sublime.find_resources("%s.*Language" % lang)
@@ -799,7 +797,11 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     except Exception as e:
                         mdtxt = note.content
                         LOG("Conversion failed", e)
-                newview = self.window.new_file()
+
+                if unk_args.get('open_new_file', True) == False:
+                    newview = self.window.active_view()
+                else:
+                    newview = self.window.new_file()
                 newview.settings().set("$evernote", True)
                 newview.settings().set("$evernote_guid", note.guid)
                 newview.settings().set("$evernote_title", note.title)
@@ -811,7 +813,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 note_contents = note.content
             newview.set_syntax_file(syntax)
             newview.set_scratch(True)
-            append_to_view(newview, note_contents)
+            replace_view_text(newview, note_contents)
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
@@ -986,6 +988,26 @@ class ViewInEvernoteClientCommand(EvernoteDoText):
     def is_enabled(self, **kw):
         return bool(self.view.settings().get("$evernote_guid", False))
 
+
+class RevertToEvernoteCommand(OpenEvernoteNoteCommand):
+
+    def do_run(self, **kwargs):
+        open_new_file = False
+        if self.view.change_count() > self.view.settings().get("$evernote_modified"):
+            answer = sublime.yes_no_cancel_dialog("Note has been modified and reverting to version from Evernote will replace it's contents. Do you want to replace?", "Replace", "Open in new tab")
+            if answer == sublime.DIALOG_NO:
+                open_new_file = True
+            elif answer == sublime.DIALOG_CANCEL:
+                return
+
+        note_guid = self.view.settings().get("$evernote_guid")
+        self.open_note(note_guid, open_new_file=open_new_file, **kwargs)
+        self.message("Loading note, please wait...")
+
+    def is_enabled(self):
+        if self.window.active_view().settings().get("$evernote_guid", False):
+            return True
+        return False
 
 class EvernoteInsertAttachment(EvernoteDoText):
 
@@ -1171,6 +1193,12 @@ class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
     def run(self):
         EvernoteDo.clear_cache()
         LOG("Cache cleared!")
+
+
+class ReplaceViewTextCommand(sublime_plugin.TextCommand):
+    def run(self, edit, characters):
+        self.view.erase(edit, sublime.Region(0, self.view.size()))
+        self.view.insert(edit, 0, characters)
 
 
 class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
