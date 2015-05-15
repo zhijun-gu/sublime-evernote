@@ -217,7 +217,7 @@ def printError(msg):
         ', debug' if DEBUG else '' ))
 
 
-def async_do(f, progress_msg="Evernote operation", done_msg=None):
+def async_do(f, progress_msg="Evernote operation", done_msg=None, on_completion=None):
     if not done_msg:
         done_msg = progress_msg + ': ' + "done!"
     status = {'done': False, 'i': 0}
@@ -229,6 +229,8 @@ def async_do(f, progress_msg="Evernote operation", done_msg=None):
             pass
         finally:
             s['done'] = True
+            if on_completion:
+                on_completion()
 
     def progress(s):
         if s['done']:
@@ -530,6 +532,10 @@ class SendToEvernoteCommand(EvernoteDoText):
         if "tags" in args:
             note.tagNames = extractTags(args["tags"])
 
+        on_send_completion = None
+        if "on_completion" in args:
+            on_send_completion = args["on_completion"]
+
         default_tags = args.get("default_tags", "")
         default_title = ""
         contents = ""
@@ -601,7 +607,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                 on_cancel()
 
         def __send_note(notebookGuid):
-            async_do(lambda: __send_note_async(notebookGuid), "Sending note")
+            async_do(lambda: __send_note_async(notebookGuid), "Sending note", None, on_send_completion)
 
         def __send_note_async(notebookGuid):
             note.notebookGuid = notebookGuid
@@ -639,9 +645,13 @@ class SendToEvernoteCommand(EvernoteDoText):
 
 class SaveEvernoteNoteCommand(EvernoteDoText):
 
-    def do_run(self, edit):
+    def do_run(self, edit, **args):
         note = Types.Note()
         noteStore = self.get_note_store()
+
+        on_save_completion = None
+        if "on_completion" in args:
+            on_save_completion = args["on_completion"]
 
         note.title = self.view.settings().get("$evernote_title")
         note.guid = self.view.settings().get("$evernote_guid")
@@ -663,7 +673,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                     self.connect(self.__update_note)
 
-        async_do(__update_note, "Updating note")
+        async_do(__update_note, "Updating note", None, on_save_completion)
 
     def is_enabled(self, **kw):
         if self.view.settings().get("$evernote_guid", False):
@@ -1223,15 +1233,19 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
 
             guid = view.settings().get("$evernote_guid")
 
+            def on_completion():
+                cloned.settings().set("$evernote_modified", cloned.change_count())
+                cloned.close()
+
             def on_choice(i):
                 if i == 1:
                     if guid:
-                        cloned.run_command("save_evernote_note")
+                        SaveEvernoteNoteCommand(cloned).run(None, on_completion=on_completion)
                     else:
-                        cloned.run_command("send_to_evernote")
-                if i >= 0:
-                    cloned.settings().set("$evernote_modified", cloned.change_count())
-                    cloned.close()
+                        SendToEvernoteCommand(cloned).run(None, on_completion=on_completion)
+
+                elif i == 0:
+                    on_completion()
 
             cloned.window().show_quick_panel(choices, on_choice)
 
