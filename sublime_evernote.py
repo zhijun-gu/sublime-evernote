@@ -438,24 +438,21 @@ class EvernoteDo():
             contents = contents.substr(sublime.Region(0, contents.size()))
         body = markdown2.markdown(contents, extras=EvernoteDo.MD_EXTRAS)
 
-        body_wrapper = '<div style="%s">\n%s\n</div>'
         wrapper_style = ''
         if 'inline-css' in EvernoteDo.MD_EXTRAS:
             if 'body' in EvernoteDo.MD_EXTRAS['inline-css']:
                 wrapper_style = EvernoteDo.MD_EXTRAS['inline-css']['body']
-        body_with_wrapper = body_wrapper % (wrapper_style, body)
 
         meta = body.metadata or {}
         content = '<?xml version="1.0" encoding="UTF-8"?>'
         content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
-        content += '<en-note>'
+        content += '<en-note style="%s">' % wrapper_style
         hidden = ('\n%s%s%s\n' %
                     (SUBLIME_EVERNOTE_COMMENT_BEG,
                      b64encode(contents.encode('utf8')).decode('utf8'),
                      SUBLIME_EVERNOTE_COMMENT_END))
         content += hidden
-        content += body_with_wrapper
-        LOG(body_with_wrapper)
+        content += body
         content += '</en-note>'
         note.title = meta.get("title", note.title)
         tags = meta.get("tags", note.tagNames)
