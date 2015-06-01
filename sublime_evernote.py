@@ -453,6 +453,7 @@ class EvernoteDo():
                      SUBLIME_EVERNOTE_COMMENT_END))
         content += hidden
         content += body
+        LOG(body)
         content += '</en-note>'
         note.title = meta.get("title", note.title)
         tags = meta.get("tags", note.tagNames)
