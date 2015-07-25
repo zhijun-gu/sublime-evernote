@@ -31,7 +31,7 @@ class BashLexer(RegexLexer):
     """
 
     name = 'Bash'
-    aliases = ['bash', 'sh', 'ksh']
+    aliases = ['bash', 'sh', 'ksh', 'shell']
     filenames = ['*.sh', '*.ksh', '*.bash', '*.ebuild', '*.eclass',
                  '.bashrc', 'bashrc', '.bash_*', 'bash_*', 'PKGBUILD']
     mimetypes = ['application/x-sh', 'application/x-shellscript']
@@ -39,11 +39,15 @@ class BashLexer(RegexLexer):
     tokens = {
         'root': [
             include('basic'),
-            (r'\$\(\(', Keyword, 'math'),
-            (r'\$\(', Keyword, 'paren'),
-            (r'\${#?', Keyword, 'curly'),
             (r'`', String.Backtick, 'backticks'),
             include('data'),
+            include('interp'),
+        ],
+        'interp': [
+            (r'\$\(\(', Keyword, 'math'),
+            (r'\$\(', Keyword, 'paren'),
+            (r'\$\{#?', String.Interpol, 'curly'),
+            (r'\$#?(\w+|.)', Name.Variable),
         ],
         'basic': [
             (r'\b(if|fi|else|while|do|done|for|then|return|function|case|'
@@ -65,22 +69,28 @@ class BashLexer(RegexLexer):
             (r'&&|\|\|', Operator),
         ],
         'data': [
-            (r'(?s)\$?"(\\\\|\\[0-7]+|\\.|[^"\\])*"', String.Double),
-            (r"(?s)\$?'(\\\\|\\[0-7]+|\\.|[^'\\])*'", String.Single),
+            (r'(?s)\$?"(\\\\|\\[0-7]+|\\.|[^"\\$])*"', String.Double),
+            (r'"', String.Double, 'string'),
+            (r"(?s)\$'(\\\\|\\[0-7]+|\\.|[^'\\])*'", String.Single),
+            (r"(?s)'.*?'", String.Single),
             (r';', Punctuation),
             (r'&', Punctuation),
             (r'\|', Punctuation),
             (r'\s+', Text),
-            (r'[^=\s\[\]{}()$"\'`\\<&|;]+', Text),
             (r'\d+(?= |\Z)', Number),
-            (r'\$#?(\w+|.)', Name.Variable),
+            (r'[^=\s\[\]{}()$"\'`\\<&|;]+', Text),
             (r'<', Text),
         ],
+        'string': [
+            (r'"', String.Double, '#pop'),
+            (r'(?s)(\\\\|\\[0-7]+|\\.|[^"\\$])+', String.Double),
+            include('interp'),
+        ],
         'curly': [
-            (r'}', Keyword, '#pop'),
+            (r'\}', String.Interpol, '#pop'),
             (r':-', Keyword),
-            (r'[a-zA-Z0-9_]+', Name.Variable),
-            (r'[^}:"\'`$]+', Punctuation),
+            (r'\w+', Name.Variable),
+            (r'[^}:"\'`$\\]+', Punctuation),
             (r':', Punctuation),
             include('root'),
         ],
@@ -91,6 +101,8 @@ class BashLexer(RegexLexer):
         'math': [
             (r'\)\)', Keyword, '#pop'),
             (r'[-+*/%^|&]|\*\*|\|\|', Operator),
+            (r'\d+#\d+', Number),
+            (r'\d+#(?! )', Number),
             (r'\d+', Number),
             include('root'),
         ],
@@ -276,7 +288,7 @@ class TcshLexer(RegexLexer):
         'root': [
             include('basic'),
             (r'\$\(', Keyword, 'paren'),
-            (r'\${#?', Keyword, 'curly'),
+            (r'\$\{#?', Keyword, 'curly'),
             (r'`', String.Backtick, 'backticks'),
             include('data'),
         ],
@@ -294,24 +306,25 @@ class TcshLexer(RegexLexer):
              r'umask|unalias|uncomplete|unhash|universe|unlimit|unset|unsetenv|'
              r'ver|wait|warp|watchlog|where|which)\s*\b',
              Name.Builtin),
-            (r'#.*\n', Comment),
+            (r'#.*', Comment),
             (r'\\[\w\W]', String.Escape),
             (r'(\b\w+)(\s*)(=)', bygroups(Name.Variable, Text, Operator)),
             (r'[\[\]{}()=]+', Operator),
             (r'<<\s*(\'?)\\?(\w+)[\w\W]+?\2', String),
+            (r';', Punctuation),
         ],
         'data': [
             (r'(?s)"(\\\\|\\[0-7]+|\\.|[^"\\])*"', String.Double),
             (r"(?s)'(\\\\|\\[0-7]+|\\.|[^'\\])*'", String.Single),
             (r'\s+', Text),
-            (r'[^=\s\[\]{}()$"\'`\\]+', Text),
+            (r'[^=\s\[\]{}()$"\'`\\;#]+', Text),
             (r'\d+(?= |\Z)', Number),
             (r'\$#?(\w+|.)', Name.Variable),
         ],
         'curly': [
-            (r'}', Keyword, '#pop'),
+            (r'\}', Keyword, '#pop'),
             (r':-', Keyword),
-            (r'[a-zA-Z0-9_]+', Name.Variable),
+            (r'\w+', Name.Variable),
             (r'[^}:"\'`$]+', Punctuation),
             (r':', Punctuation),
             include('root'),
@@ -387,13 +400,13 @@ class PowerShellLexer(RegexLexer):
             (r'`[\'"$@-]', Punctuation),
             (r'"', String.Double, 'string'),
             (r"'([^']|'')*'", String.Single),
-            (r'(\$|@@|@)((global|script|private|env):)?[a-z0-9_]+',
+            (r'(\$|@@|@)((global|script|private|env):)?\w+',
              Name.Variable),
             (r'(%s)\b' % '|'.join(keywords), Keyword),
             (r'-(%s)\b' % '|'.join(operators), Operator),
-            (r'(%s)-[a-z_][a-z0-9_]*\b' % '|'.join(verbs), Name.Builtin),
-            (r'\[[a-z_\[][a-z0-9_. `,\[\]]*\]', Name.Constant),  # .net [type]s
-            (r'-[a-z_][a-z0-9_]*', Name),
+            (r'(%s)-[a-z_]\w*\b' % '|'.join(verbs), Name.Builtin),
+            (r'\[[a-z_\[][\w. `,\[\]]*\]', Name.Constant),  # .net [type]s
+            (r'-[a-z_]\w*', Name),
             (r'\w+', Name),
             (r'[.,;@{}\[\]$()=+*/\\&%!~?^`|<>-]|::', Punctuation),
         ],
@@ -408,7 +421,7 @@ class PowerShellLexer(RegexLexer):
             (r'[#&.]', Comment.Multiline),
         ],
         'string': [
-            (r"`[0abfnrtv'\"\$`]", String.Escape),
+            (r"`[0abfnrtv'\"$`]", String.Escape),
             (r'[^$`"]+', String.Double),
             (r'\$\(', Punctuation, 'child'),
             (r'""', String.Double),

@@ -12,6 +12,7 @@
 from __future__ import division
 
 from pygments.formatter import Formatter
+from pygments.lexer import Lexer
 from pygments.token import Token, STANDARD_TYPES
 from pygments.util import get_bool_opt, get_int_opt, StringIO, xrange, \
     iteritems
@@ -226,6 +227,22 @@ class LatexFormatter(Formatter):
         ``False``).
 
         .. versionadded:: 1.2
+
+    `escapeinside`
+        If set to a string of length 2, enables escaping to LaTeX. Text
+        delimited by these 2 characters is read as LaTeX code and
+        typeset accordingly. It has no effect in string literals. It has
+        no effect in comments if `texcomments` or `mathescape` is
+        set. (default: ``''``).
+
+        .. versionadded:: 2.0
+
+    `envname`
+        Allows you to pick an alternative environment name replacing Verbatim.
+        The alternate environment still has to support Verbatim's option syntax.
+        (default: ``'Verbatim'``).
+
+        .. versionadded:: 2.0
     """
     name = 'LaTeX'
     aliases = ['latex', 'tex']
@@ -243,9 +260,15 @@ class LatexFormatter(Formatter):
         self.commandprefix = options.get('commandprefix', 'PY')
         self.texcomments = get_bool_opt(options, 'texcomments', False)
         self.mathescape = get_bool_opt(options, 'mathescape', False)
+        self.escapeinside = options.get('escapeinside', '')
+        if len(self.escapeinside) == 2:
+            self.left = self.escapeinside[0]
+            self.right = self.escapeinside[1]
+        else:
+            self.escapeinside = ''
+        self.envname = options.get('envname', u'Verbatim')
 
         self._create_stylesheet()
-
 
     def _create_stylesheet(self):
         t2n = self.ttype2name = {Token: ''}
@@ -254,7 +277,7 @@ class LatexFormatter(Formatter):
 
         def rgbcolor(col):
             if col:
-                return ','.join(['%.2f' %(int(col[i] + col[i + 1], 16) / 255.0)
+                return ','.join(['%.2f' % (int(col[i] + col[i + 1], 16) / 255.0)
                                  for i in (0, 2, 4)])
             else:
                 return '1,1,1'
@@ -314,14 +337,14 @@ class LatexFormatter(Formatter):
             realoutfile = outfile
             outfile = StringIO()
 
-        outfile.write(r'\begin{Verbatim}[commandchars=\\\{\}')
+        outfile.write(u'\\begin{' + self.envname + u'}[commandchars=\\\\\\{\\}')
         if self.linenos:
             start, step = self.linenostart, self.linenostep
             outfile.write(u',numbers=left' +
                           (start and u',firstnumber=%d' % start or u'') +
                           (step and u',stepnumber=%d' % step or u''))
-        if self.mathescape or self.texcomments:
-            outfile.write(r',codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}')
+        if self.mathescape or self.texcomments or self.escapeinside:
+            outfile.write(u',codes={\\catcode`\\$=3\\catcode`\\^=7\\catcode`\\_=8}')
         if self.verboptions:
             outfile.write(u',' + self.verboptions)
         outfile.write(u']\n')
@@ -350,9 +373,22 @@ class LatexFormatter(Formatter):
                             parts[i] = escape_tex(part, self.commandprefix)
                         in_math = not in_math
                     value = '$'.join(parts)
+                elif self.escapeinside:
+                    text = value
+                    value = ''
+                    while len(text) > 0:
+                        a, sep1, text = text.partition(self.left)
+                        if len(sep1) > 0:
+                            b, sep2, text = text.partition(self.right)
+                            if len(sep2) > 0:
+                                value += escape_tex(a, self.commandprefix) + b
+                            else:
+                                value += escape_tex(a + sep1 + b, self.commandprefix)
+                        else:
+                            value = value + escape_tex(a, self.commandprefix)
                 else:
                     value = escape_tex(value, self.commandprefix)
-            else:
+            elif ttype not in Token.Escape:
                 value = escape_tex(value, self.commandprefix)
             styles = []
             while ttype is not Token:
@@ -374,13 +410,67 @@ class LatexFormatter(Formatter):
             else:
                 outfile.write(value)
 
-        outfile.write(u'\\end{Verbatim}\n')
+        outfile.write(u'\\end{' + self.envname + u'}\n')
 
         if self.full:
             realoutfile.write(DOC_TEMPLATE %
                 dict(docclass  = self.docclass,
                      preamble  = self.preamble,
                      title     = self.title,
-                     encoding  = self.encoding or 'latin1',
+                     encoding  = self.encoding or 'utf8',
                      styledefs = self.get_style_defs(),
                      code      = outfile.getvalue()))
+
+
+class LatexEmbeddedLexer(Lexer):
+    r"""
+
+    This lexer takes one lexer as argument, the lexer for the language
+    being formatted, and the left and right delimiters for escaped text.
+
+    First everything is scanned using the language lexer to obtain
+    strings and comments. All other consecutive tokens are merged and
+    the resulting text is scanned for escaped segments, which are given
+    the Token.Escape type. Finally text that is not escaped is scanned
+    again with the language lexer.
+    """
+    def __init__(self, left, right, lang, **options):
+        self.left = left
+        self.right = right
+        self.lang = lang
+        Lexer.__init__(self, **options)
+
+    def get_tokens_unprocessed(self, text):
+        buf = ''
+        idx = 0
+        for i, t, v in self.lang.get_tokens_unprocessed(text):
+            if t in Token.Comment or t in Token.String:
+                if buf:
+                    for x in self.get_tokens_aux(idx, buf):
+                        yield x
+                    buf = ''
+                yield i, t, v
+            else:
+                if not buf:
+                    idx = i
+                buf += v
+        if buf:
+            for x in self.get_tokens_aux(idx, buf):
+                yield x
+
+    def get_tokens_aux(self, index, text):
+        while text:
+            a, sep1, text = text.partition(self.left)
+            if a:
+                for i, t, v in self.lang.get_tokens_unprocessed(a):
+                    yield index + i, t, v
+                    index += len(a)
+            if sep1:
+                b, sep2, text = text.partition(self.right)
+                if sep2:
+                    yield index + len(sep1), Token.Escape, b
+                    index += len(sep1) + len(b) + len(sep2)
+                else:
+                    yield index, Token.Error, sep1
+                    index += len(sep1)
+                    text = b

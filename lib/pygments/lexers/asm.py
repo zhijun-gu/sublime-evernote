@@ -12,12 +12,14 @@
 import re
 
 from pygments.lexer import RegexLexer, include, bygroups, using, DelegatingLexer
-from pygments.lexers.compiled import DLexer, CppLexer, CLexer
+from pygments.lexers.c_cpp import CppLexer, CLexer
+from pygments.lexers.d import DLexer
 from pygments.token import Text, Name, Number, String, Comment, Punctuation, \
-     Other, Keyword, Operator
+    Other, Keyword, Operator
 
-__all__ = ['GasLexer', 'ObjdumpLexer','DObjdumpLexer', 'CppObjdumpLexer',
-           'CObjdumpLexer', 'LlvmLexer', 'NasmLexer', 'Ca65Lexer']
+__all__ = ['GasLexer', 'ObjdumpLexer', 'DObjdumpLexer', 'CppObjdumpLexer',
+           'CObjdumpLexer', 'LlvmLexer', 'NasmLexer', 'NasmObjdumpLexer',
+           'Ca65Lexer']
 
 
 class GasLexer(RegexLexer):
@@ -31,7 +33,7 @@ class GasLexer(RegexLexer):
 
     #: optional Comment or Whitespace
     string = r'"(\\"|[^"])*"'
-    char = r'[a-zA-Z$._0-9@-]'
+    char = r'[\w$.@-]'
     identifier = r'(?:[a-zA-Z$_]' + char + '*|\.' + char + '+)'
     number = r'(?:0[xX][a-zA-Z0-9]+|\d+)'
 
@@ -96,18 +98,12 @@ class GasLexer(RegexLexer):
             return 0.1
 
 
-class ObjdumpLexer(RegexLexer):
+def _objdump_lexer_tokens(asm_lexer):
     """
-    For the output of 'objdump -dr'
+    Common objdump lexer tokens to wrap an ASM lexer.
     """
-    name = 'objdump'
-    aliases = ['objdump']
-    filenames = ['*.objdump']
-    mimetypes = ['text/x-objdump']
-
-    hex = r'[0-9A-Za-z]'
-
-    tokens = {
+    hex_re = r'[0-9A-Za-z]'
+    return {
         'root': [
             # File name & format:
             ('(.*?)(:)( +file format )(.*?)$',
@@ -117,38 +113,50 @@ class ObjdumpLexer(RegexLexer):
                 bygroups(Text, Name.Label, Punctuation)),
             # Function labels
             # (With offset)
-            ('('+hex+'+)( )(<)(.*?)([-+])(0[xX][A-Za-z0-9]+)(>:)$',
+            ('('+hex_re+'+)( )(<)(.*?)([-+])(0[xX][A-Za-z0-9]+)(>:)$',
                 bygroups(Number.Hex, Text, Punctuation, Name.Function,
                          Punctuation, Number.Hex, Punctuation)),
             # (Without offset)
-            ('('+hex+'+)( )(<)(.*?)(>:)$',
+            ('('+hex_re+'+)( )(<)(.*?)(>:)$',
                 bygroups(Number.Hex, Text, Punctuation, Name.Function,
                          Punctuation)),
             # Code line with disassembled instructions
-            ('( *)('+hex+r'+:)(\t)((?:'+hex+hex+' )+)( *\t)([a-zA-Z].*?)$',
+            ('( *)('+hex_re+r'+:)(\t)((?:'+hex_re+hex_re+' )+)( *\t)([a-zA-Z].*?)$',
                 bygroups(Text, Name.Label, Text, Number.Hex, Text,
-                         using(GasLexer))),
+                         using(asm_lexer))),
             # Code line with ascii
-            ('( *)('+hex+r'+:)(\t)((?:'+hex+hex+' )+)( *)(.*?)$',
+            ('( *)('+hex_re+r'+:)(\t)((?:'+hex_re+hex_re+' )+)( *)(.*?)$',
                 bygroups(Text, Name.Label, Text, Number.Hex, Text, String)),
             # Continued code line, only raw opcodes without disassembled
             # instruction
-            ('( *)('+hex+r'+:)(\t)((?:'+hex+hex+' )+)$',
+            ('( *)('+hex_re+r'+:)(\t)((?:'+hex_re+hex_re+' )+)$',
                 bygroups(Text, Name.Label, Text, Number.Hex)),
             # Skipped a few bytes
             (r'\t\.\.\.$', Text),
             # Relocation line
             # (With offset)
-            (r'(\t\t\t)('+hex+r'+:)( )([^\t]+)(\t)(.*?)([-+])(0x' + hex + '+)$',
+            (r'(\t\t\t)('+hex_re+r'+:)( )([^\t]+)(\t)(.*?)([-+])(0x'+hex_re+'+)$',
                 bygroups(Text, Name.Label, Text, Name.Property, Text,
                          Name.Constant, Punctuation, Number.Hex)),
             # (Without offset)
-            (r'(\t\t\t)('+hex+r'+:)( )([^\t]+)(\t)(.*?)$',
+            (r'(\t\t\t)('+hex_re+r'+:)( )([^\t]+)(\t)(.*?)$',
                 bygroups(Text, Name.Label, Text, Name.Property, Text,
                          Name.Constant)),
             (r'[^\n]+\n', Other)
         ]
     }
+
+
+class ObjdumpLexer(RegexLexer):
+    """
+    For the output of 'objdump -dr'
+    """
+    name = 'objdump'
+    aliases = ['objdump']
+    filenames = ['*.objdump']
+    mimetypes = ['text/x-objdump']
+
+    tokens = _objdump_lexer_tokens(GasLexer)
 
 
 class DObjdumpLexer(DelegatingLexer):
@@ -201,7 +209,7 @@ class LlvmLexer(RegexLexer):
 
     #: optional Comment or Whitespace
     string = r'"[^"]*?"'
-    identifier = r'([-a-zA-Z$._][-a-zA-Z$._0-9]*|' + string + ')'
+    identifier = r'([-a-zA-Z$._][\w\-$.]*|' + string + ')'
 
     tokens = {
         'root': [
@@ -212,11 +220,11 @@ class LlvmLexer(RegexLexer):
 
             include('keyword'),
 
-            (r'%' + identifier, Name.Variable),#Name.Identifier.Local),
-            (r'@' + identifier, Name.Variable.Global),#Name.Identifier.Global),
-            (r'%\d+', Name.Variable.Anonymous),#Name.Identifier.Anonymous),
-            (r'@\d+', Name.Variable.Global),#Name.Identifier.Anonymous),
-            (r'#\d+', Name.Variable.Global),#Name.Identifier.Global),
+            (r'%' + identifier, Name.Variable),
+            (r'@' + identifier, Name.Variable.Global),
+            (r'%\d+', Name.Variable.Anonymous),
+            (r'@\d+', Name.Variable.Global),
+            (r'#\d+', Name.Variable.Global),
             (r'!' + identifier, Name.Variable),
             (r'!\d+', Name.Variable.Anonymous),
             (r'c?' + string, String),
@@ -310,8 +318,8 @@ class NasmLexer(RegexLexer):
     filenames = ['*.asm', '*.ASM']
     mimetypes = ['text/x-nasm']
 
-    identifier = r'[a-zA-Z$._?][a-zA-Z0-9$._?#@~]*'
-    hexn = r'(?:0[xX][0-9a-fA-F]+|$0[0-9a-fA-F]*|[0-9]+[0-9a-fA-F]*h)'
+    identifier = r'[a-z$._?][\w$.?#@~]*'
+    hexn = r'(?:0x[0-9a-f]+|$0[0-9a-f]*|[0-9]+[0-9a-f]*h)'
     octn = r'[0-7]+q'
     binn = r'[01]+b'
     decn = r'[0-9]+'
@@ -330,8 +338,8 @@ class NasmLexer(RegexLexer):
     flags = re.IGNORECASE | re.MULTILINE
     tokens = {
         'root': [
-            include('whitespace'),
             (r'^\s*%', Comment.Preproc, 'preproc'),
+            include('whitespace'),
             (identifier + ':', Name.Label),
             (r'(%s)(\s+)(equ)' % identifier,
                 bygroups(Name.Constant, Keyword.Declaration, Keyword.Declaration),
@@ -345,7 +353,7 @@ class NasmLexer(RegexLexer):
             (string, String),
             (hexn, Number.Hex),
             (octn, Number.Oct),
-            (binn, Number),
+            (binn, Number.Bin),
             (floatn, Number.Float),
             (decn, Number.Integer),
             include('punctuation'),
@@ -374,13 +382,27 @@ class NasmLexer(RegexLexer):
     }
 
 
+class NasmObjdumpLexer(ObjdumpLexer):
+    """
+    For the output of 'objdump -d -M intel'.
+
+    .. versionadded:: 2.0
+    """
+    name = 'objdump-nasm'
+    aliases = ['objdump-nasm']
+    filenames = ['*.objdump-intel']
+    mimetypes = ['text/x-nasm-objdump']
+
+    tokens = _objdump_lexer_tokens(NasmLexer)
+
+
 class Ca65Lexer(RegexLexer):
     """
     For ca65 assembler sources.
 
     .. versionadded:: 1.6
     """
-    name = 'ca65'
+    name = 'ca65 assembler'
     aliases = ['ca65']
     filenames = ['*.s']
 
@@ -395,13 +417,14 @@ class Ca65Lexer(RegexLexer):
              r'|cl[cvdi]|se[cdi]|jmp|jsr|bne|beq|bpl|bmi|bvc|bvs|bcc|bcs'
              r'|p[lh][ap]|rt[is]|brk|nop|ta[xy]|t[xy]a|txs|tsx|and|ora|eor'
              r'|bit)\b', Keyword),
-            (r'\.[a-z0-9_]+', Keyword.Pseudo),
+            (r'\.\w+', Keyword.Pseudo),
             (r'[-+~*/^&|!<>=]', Operator),
             (r'"[^"\n]*.', String),
             (r"'[^'\n]*.", String.Char),
             (r'\$[0-9a-f]+|[0-9a-f]+h\b', Number.Hex),
-            (r'\d+|%[01]+', Number.Integer),
-            (r'[#,.:()=]', Punctuation),
+            (r'\d+', Number.Integer),
+            (r'%[01]+', Number.Bin),
+            (r'[#,.:()=\[\]]', Punctuation),
             (r'[a-z_.@$][\w.@$]*', Name),
         ]
     }
