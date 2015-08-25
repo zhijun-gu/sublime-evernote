@@ -29,6 +29,7 @@
     { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },
     { "command": "new_evernote_note", "caption": "Evernote: New empty note" },
     { "command": "evernote_insert_attachment", "caption": "Evernote: Insert Attachment Here" },
-    { "command": "evernote_show_attachments", "caption": "Evernote: Show Attachments" },
+    { "command": "evernote_show_attachments", "caption": "Evernote: Show Attachments…" },
+    { "command": "evernote_delete_attachment", "caption": "Evernote: Delete Attachment…" },
     { "command": "revert_to_evernote", "caption": "Evernote: Revert to version on Evernote" }
 ]
