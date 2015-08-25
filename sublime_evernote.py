@@ -1092,51 +1092,51 @@ def hashstr(h):
 
 class EvernoteShowAttachments(EvernoteDoText):
 
-        def do_run(self, edit, filename=None, prompt=False):
-            guid = self.view.settings().get("$evernote_guid")
-            noteStore = self.get_note_store()
-            note = noteStore.getNote(self.token(), guid, True, False, False, False)
-            resources = note.resources or []
-            menu = [[r.attributes.fileName or r.attributes.sourceURL or
-                     ("Unnamed %s" % (r.mime or "")),
-                     "hash: %s" % hashstr(r.data.bodyHash)]
-                    for r in resources]
+    def do_run(self, edit):
+        guid = self.view.settings().get("$evernote_guid")
+        noteStore = self.get_note_store()
+        note = noteStore.getNote(self.token(), guid, False, False, False, False)
+        resources = note.resources or []
+        menu = [[r.attributes.fileName or r.attributes.sourceURL or
+                 ("Unnamed %s" % (r.mime or "")),
+                 "hash: %s" % hashstr(r.data.bodyHash)]
+                for r in resources]
 
-            def on_done(i):
-                async_do(lambda: on_done_async(i), "Fetching Attachment")
+        def on_done(i):
+            async_do(lambda: on_done_async(i), "Fetching Attachment")
 
-            def on_done_async(i):
-                if i >= 0:
-                    import tempfile, mimetypes
-                    try:
-                        contents = noteStore.getResource(
-                            self.token(), note.resources[i].guid,
-                            True, False, False, False).data.body
-                        mime = resources[i].mime or "application/octet-stream"
-                        _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
-                        mime = mime.split("/")[0]
-                        with open(tmp, 'wb') as tmpf:
-                            tmpf.write(contents)
-                        if mime in ["text", "image"]:
-                            aview = self.view.window().open_file(tmp)
-                            aview.set_read_only(True)
-                            # aview.set_scratch(True)
-                            # aview.set_name(menu[i][0])
-                        else:
-                            open_file_with_app(tmp)
-                    except Exception as e:
-                        sublime.error_message(
-                            "Unable to fetch the attachment.\n%s" % explain_error(e))
+        def on_done_async(i):
+            if i >= 0:
+                import tempfile, mimetypes
+                try:
+                    contents = noteStore.getResource(
+                        self.token(), note.resources[i].guid,
+                        True, False, False, False).data.body
+                    mime = resources[i].mime or "application/octet-stream"
+                    _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
+                    mime = mime.split("/")[0]
+                    with open(tmp, 'wb') as tmpf:
+                        tmpf.write(contents)
+                    if mime in ["text", "image"]:
+                        aview = self.view.window().open_file(tmp)
+                        aview.set_read_only(True)
+                        # aview.set_scratch(True)
+                        # aview.set_name(menu[i][0])
+                    else:
+                        open_file_with_app(tmp)
+                except Exception as e:
+                    sublime.error_message(
+                        "Unable to fetch the attachment.\n%s" % explain_error(e))
 
-            if menu:
-                self.view.window().show_quick_panel(menu, on_done)
-            else:
-                self.message("Note has no attachments")
+        if menu:
+            self.view.window().show_quick_panel(menu, on_done)
+        else:
+            self.message("Note has no attachments")
 
-        def is_enabled(self, **kw):
-            if self.view.settings().get("$evernote_guid", False):
-                return True
-            return False
+    def is_enabled(self, **kw):
+        if self.view.settings().get("$evernote_guid", False):
+            return True
+        return False
 
 
 class ViewInEvernoteWebappCommand(sublime_plugin.TextCommand):
