@@ -607,7 +607,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                 on_cancel()
 
         def __send_note(notebookGuid):
-            async_do(lambda: __send_note_async(notebookGuid), "Sending note", None, on_send_completion)
+            async_do(lambda: __send_note_async(notebookGuid), "Sending note", on_completion=on_send_completion)
 
         def __send_note_async(notebookGuid):
             note.notebookGuid = notebookGuid
@@ -673,7 +673,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
                 if sublime.ok_cancel_dialog('Evernote complained:\n\n%s\n\nRetry?' % explain_error(e)):
                     self.connect(self.__update_note)
 
-        async_do(__update_note, "Updating note", None, on_save_completion)
+        async_do(__update_note, "Updating note", on_completion=on_save_completion)
 
     def is_enabled(self, **kw):
         if self.view.settings().get("$evernote_guid", False):
