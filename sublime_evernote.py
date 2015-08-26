@@ -77,6 +77,16 @@ notebook: %s
 def metadata_header(title="", tags=[], notebook="", **kw):
     return METADATA_HEADER % (title, json.dumps(tags, ensure_ascii=False), notebook)
 
+def set_view_metadata(view, note, reset_modified=True):
+    view.settings().set("$evernote", True)
+    view.settings().set("$evernote_guid", note.guid)
+    view.settings().set("$evernote_title", note.title)
+    if reset_modified:
+        note_is_current(view)
+
+def note_is_current(view):
+    view.settings().set("$evernote_modified", view.change_count())
+
 
 def insert_to_view(view, text):
     view.run_command('insert', {
@@ -621,10 +631,7 @@ class SendToEvernoteCommand(EvernoteDoText):
                 self.message("Posting note, please wait...")
                 cnote = noteStore.createNote(self.token(), note)
                 if not clip:
-                    view.settings().set("$evernote", True)
-                    view.settings().set("$evernote_guid", cnote.guid)
-                    view.settings().set("$evernote_title", cnote.title)
-                    view.settings().set("$evernote_modified", view.change_count())
+                    set_view_metadata(view, cnote)
                     view.set_syntax_file(self.md_syntax)
                 self.message("Successfully posted note: guid:%s" % cnote.guid, 10000)
                 self.update_status_info(cnote)
@@ -663,10 +670,7 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
         def __update_note():
             try:
                 cnote = noteStore.updateNote(self.token(), note)
-                self.view.settings().set("$evernote", True)
-                self.view.settings().set("$evernote_guid", cnote.guid)
-                self.view.settings().set("$evernote_title", cnote.title)
-                self.view.settings().set("$evernote_modified", self.view.change_count())
+                set_view_metadata(self.view, cnote)
                 self.message("Successfully updated note: guid:%s" % cnote.guid)
                 self.update_status_info(cnote)
             except Exception as e:
@@ -836,9 +840,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                     newview = self.window.active_view()
                 else:
                     newview = self.window.new_file()
-                newview.settings().set("$evernote", True)
-                newview.settings().set("$evernote_guid", note.guid)
-                newview.settings().set("$evernote_title", note.title)
+                set_view_metadata(newview, note, False)
                 syntax = self.md_syntax
                 note_contents = meta+mdtxt
             else:
@@ -851,7 +853,7 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
-            newview.settings().set("$evernote_modified", newview.change_count())
+            note_is_current(newview)
         except Exception as e:
             sublime.error_message(explain_error(e))
 
@@ -1346,7 +1348,7 @@ class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
             guid = view.settings().get("$evernote_guid")
 
             def on_completion():
-                cloned.settings().set("$evernote_modified", cloned.change_count())
+                note_is_current(cloned)
                 cloned.close()
 
             def on_choice(i):
