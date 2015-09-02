@@ -1172,17 +1172,45 @@ $0
 
 """
 
+def try_loading_template(template, complain=True):
+    try:
+        contents = sublime.load_resource(template)
+        return contents
+    except Exception:
+        if complain:
+            sublime.error_message("Template file '%s' for new Evernote note not found.")
+        return None
+
 
 class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
 
-    def run(self):
+    def run(self, contents=None, template=None):
         self.load_settings()
+        if contents is None:
+            template = template or self.settings.get("default_template", None)
+            contents = try_loading_template(template, False)
+            if contents is None and template is not None:
+                templates = sublime.find_resources(template)
+                if len(templates) > 1:
+
+                    def on_choice(i):
+                        if i >= 0:
+                            contents = try_loading_template(templates[i])
+                            if contents is not None:
+                                self.window.run_command("new_evernote_note", {"contents": contents})
+
+                    self.window.show_quick_panel(templates, on_choice)
+                    return
+
+                elif len(templates) == 1:
+                    contents = try_loading_template(templates[0])
+            contents = contents or META_SNIPPET
         view = self.window.new_file()
         view.set_syntax_file(self.md_syntax)
         view.settings().set("$evernote", True)
         view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.set_scratch(True)
-        view.run_command("insert_snippet", {"contents": META_SNIPPET})
+        view.run_command("insert_snippet", {"contents": contents})
         if self.settings.get('evernote_autocomplete'):
             sublime.set_timeout(lambda: view.run_command("auto_complete"), 10)
 
