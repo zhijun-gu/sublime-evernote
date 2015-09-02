@@ -1022,7 +1022,7 @@ class RevertToEvernoteCommand(OpenEvernoteNoteCommand):
 class EvernoteInsertAttachment(EvernoteDoText):
 
         def do_run(self, edit, insert_in_content=True, filename=None, prompt=False):
-            import hashlib, mimetypes
+            import hashlib, mimetypes, urllib
             view = self.view
             if filename is None or prompt:
                 view.window().show_input_panel(
@@ -1034,14 +1034,14 @@ class EvernoteInsertAttachment(EvernoteDoText):
                 return
             filename = filename.strip()
             attr = {}
+            mimet = None
             try:
-                if filename.startswith("http://") or \
-                   filename.startswith("https://"):
+                if urllib.parse.urlparse(filename).scheme != "":
                     # download
-                    import urllib.request
                     response = urllib.request.urlopen(filename)
                     filecontents = response.read()
                     attr = {"sourceURL": filename}
+                    mimet = response.info().get_content_type()
                 else:
                     datafile = os.path.expanduser(filename)
                     with open(datafile, 'rb') as content_file:
@@ -1058,7 +1058,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
                     guid = self.view.settings().get("$evernote_guid")
                     noteStore = self.get_note_store()
                     note = noteStore.getNote(self.token(), guid, False, False, False, False)
-                    mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+                    mime = mimet or mimetypes.guess_type(filename)[0] or "application/octet-stream"
                     h = hashlib.md5(filecontents)
                     attachment = Types.Resource(
                         # noteGuid=guid,
