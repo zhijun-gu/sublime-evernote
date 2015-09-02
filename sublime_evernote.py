@@ -681,6 +681,30 @@ class SaveEvernoteNoteCommand(EvernoteDoText):
         return False
 
 
+DELETE_MSG = "You are about to delete '%s'.\nYour note will still be recoverable from the Trash.\nDo you want to proceed?"
+
+
+class DeleteEvernoteNoteCommand(EvernoteDoText):
+
+    def do_run(self, edit, guid=None, prompt=True):
+        if guid is None:
+            guid = self.view.settings().get("$evernote_guid")
+        if guid:
+            title = self.view.settings().get("$evernote_title", "Untitled")
+            noteStore = self.get_note_store()
+            if not prompt or sublime.ok_cancel_dialog(DELETE_MSG % title):
+                noteStore.deleteNote(self.token(), guid)
+                self.view.settings().set("$evernote_guid", None)
+                self.view.settings().set("$evernote_modified", self.view.change_count())
+                self.view.close()
+        return
+
+    def is_enabled(self, **kw):
+        if self.view.settings().get("$evernote_guid", False):
+            return True
+        return False
+
+
 class OpenEvernoteNoteCommand(EvernoteDoWindow):
 
     def do_run(self, note_guid=None, by_searching=None,
