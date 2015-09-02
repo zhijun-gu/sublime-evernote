@@ -1102,46 +1102,106 @@ def hashstr(h):
 
 class EvernoteShowAttachments(EvernoteDoText):
 
-        def do_run(self, edit, filename=None, prompt=False):
+    def do_run(self, edit):
+        guid = self.view.settings().get("$evernote_guid")
+        noteStore = self.get_note_store()
+        note = noteStore.getNote(self.token(), guid, False, False, False, False)
+        resources = note.resources or []
+        menu = [[r.attributes.fileName or r.attributes.sourceURL or
+                 ("Unnamed %s" % (r.mime or "")),
+                 "hash: %s" % hashstr(r.data.bodyHash)]
+                for r in resources]
+
+        def on_done(i):
+            async_do(lambda: on_done_async(i), "Fetching Attachment")
+
+        def on_done_async(i):
+            if i >= 0:
+                import tempfile, mimetypes
+                try:
+                    contents = noteStore.getResource(
+                        self.token(), note.resources[i].guid,
+                        True, False, False, False).data.body
+                    mime = resources[i].mime or "application/octet-stream"
+                    _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
+                    mime = mime.split("/")[0]
+                    with open(tmp, 'wb') as tmpf:
+                        tmpf.write(contents)
+                    if mime in ["text", "image"]:
+                        aview = self.view.window().open_file(tmp)
+                        aview.set_read_only(True)
+                        # aview.set_scratch(True)
+                        # aview.set_name(menu[i][0])
+                    else:
+                        open_file_with_app(tmp)
+                except Exception as e:
+                    sublime.error_message(
+                        "Unable to fetch the attachment.\n%s" % explain_error(e))
+
+        if menu:
+            self.view.window().show_quick_panel(menu, on_done)
+        else:
+            self.message("Note has no attachments")
+
+    def is_enabled(self, **kw):
+        if self.view.settings().get("$evernote_guid", False):
+            return True
+        return False
+
+
+class EvernoteDeleteAttachment(EvernoteDoText):
+
+        def do_run(self, edit, attachment_hash=None, attachment_index=None):
             guid = self.view.settings().get("$evernote_guid")
             noteStore = self.get_note_store()
-            note = noteStore.getNote(self.token(), guid, True, False, False, False)
-            resources = note.resources or []
-            menu = [[r.attributes.fileName or r.attributes.sourceURL or
-                     ("Unnamed %s" % (r.mime or "")),
-                     "hash: %s" % hashstr(r.data.bodyHash)]
-                    for r in resources]
+            note = noteStore.getNote(self.token(), guid, False, False, False, False)
 
-            def on_done(i):
-                async_do(lambda: on_done_async(i), "Fetching Attachment")
+            if attachment_hash or attachment_index:
+                try:
+                    if attachment_hash is None:
+                        attachment_hash = hashstr(note.resources[attachment_index].data.bodyHash)
+                    if attachment_index is None:
+                        for r in range(len(note.resources)):
+                            if hashstr(note.resources[r].data.bodyHash) == attachment_hash:
+                                attachment_index = r
+                        if attachment_index is None:
+                            sublime.error_message("Attachment not found!")
+                            return
 
-            def on_done_async(i):
-                if i >= 0:
-                    import tempfile, mimetypes
-                    try:
-                        contents = noteStore.getResource(
-                            self.token(), note.resources[i].guid,
-                            True, False, False, False).data.body
-                        mime = resources[i].mime or "application/octet-stream"
-                        _, tmp = tempfile.mkstemp(mimetypes.guess_extension(mime) or "")
-                        mime = mime.split("/")[0]
-                        with open(tmp, 'wb') as tmpf:
-                            tmpf.write(contents)
-                        if mime in ["text", "image"]:
-                            aview = self.view.window().open_file(tmp)
-                            aview.set_read_only(True)
-                            # aview.set_scratch(True)
-                            # aview.set_name(menu[i][0])
-                        else:
-                            open_file_with_app(tmp)
-                    except Exception as e:
-                        sublime.error_message(
-                            "Unable to fetch the attachment.\n%s" % explain_error(e))
+                    note.resources.pop(attachment_index)
+                    noteStore.updateNote(self.token(), note)
 
-            if menu:
-                self.view.window().show_quick_panel(menu, on_done)
+                    regions = self.view.find_all(
+                        r'<en-media [^>]*hash\s*=\s*["\']'+attachment_hash+'["\'][^>]*/>',
+                        sublime.IGNORECASE)
+                    for region in reversed(regions):
+                        self.view.erase(edit, region)
+
+                except Exception as e:
+                    sublime.error_message(
+                        "Unable to delete the attachment.\n%s" % explain_error(e))
             else:
-                self.message("Note has no attachments")
+                resources = note.resources or []
+                menu = [[r.attributes.fileName or r.attributes.sourceURL or
+                         ("Unnamed %s" % (r.mime or "")),
+                         "hash: %s" % hashstr(r.data.bodyHash)]
+                        for r in resources]
+
+                def on_done(i):
+                    async_do(lambda: on_done_async(i), "Deleting Attachment")
+
+                def on_done_async(i):
+                    if i >= 0:
+                        rhash = hashstr(note.resources[i].data.bodyHash)
+                        # Not the most efficient way (downloads note's metadata twice)
+                        # but this way we will have a valid edit object for erasing
+                        self.view.run_command(
+                            "evernote_delete_attachment",
+                            {"attachment_hash": rhash, "attachment_index": i})
+                if menu:
+                    self.view.window().show_quick_panel(menu, on_done)
+                else:
+                    self.message("Note has no attachments")
 
         def is_enabled(self, **kw):
             if self.view.settings().get("$evernote_guid", False):
