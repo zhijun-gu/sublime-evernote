@@ -8,6 +8,14 @@
  * update wiki if needed
  * add release on GitHub with release notes from Readme
 
+# Features
+
+ * New note: `templates = find_resources("EvernoteNewNote*.sublime-snippet")`
+   If `len(templates)==1` use that. Otherwise show quick panel.
+   If `template` argument is given pass that verbatim to `insert_snippet`
+   (so possible args can be `{"name": snippet_file}` or `{"contents": snippet}`)
+ * Global style
+
 # Documentation
 
  * Known bugs in wiki:
