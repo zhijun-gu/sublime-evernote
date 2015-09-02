@@ -328,7 +328,7 @@ class EvernoteDo():
             datestr(note.created), datestr(note.updated), len(note.resources or []))
         view.set_status("Evernote-info", info)
         if view.file_name() is None and note.title is not None:
-            view.set_name(note.title)
+            view.set_name(self.settings.get("tab_prefix", "") + note.title)
 
     def connect(self, callback, **kwargs):
         self.message("initializing..., please wait...")
@@ -1296,6 +1296,7 @@ class NewEvernoteNoteCommand(EvernoteDo, sublime_plugin.WindowCommand):
         view.settings().set("$evernote", True)
         view.set_status("Evernote-info", "Send to evernote to save your edits")
         view.set_scratch(True)
+        view.set_name(self.settings.get("tab_prefix", "") + "Unsaved note")
         view.run_command("insert_snippet", {"contents": contents})
         if self.settings.get('evernote_autocomplete'):
             sublime.set_timeout(lambda: view.run_command("auto_complete"), 10)
