@@ -523,7 +523,8 @@ class HtmlFormatter(Formatter):
                                                self.cssfile)
                 except AttributeError:
                     print('Note: Cannot determine output file name, ' \
-                          'using current directory as base for the CSS file name', file=sys.stderr)
+                          'using current directory as base for the CSS file name',
+                          file=sys.stderr)
                     cssfilename = self.cssfile
             # write CSS file only if noclobber_cssfile isn't given as an option.
             try:
@@ -627,24 +628,24 @@ class HtmlFormatter(Formatter):
                         style = 'background-color: #ffffc0; padding: 0 5px 0 5px'
                     else:
                         style = 'background-color: #f0f0f0; padding: 0 5px 0 5px'
-                    yield 1, '<span style="%s">%*s</span> ' % (
+                    yield 1, '<span style="%s">%*s </span>' % (
                         style, mw, (num%st and ' ' or num)) + line
                     num += 1
             else:
                 for t, line in lines:
                     yield 1, ('<span style="background-color: #f0f0f0; '
-                              'padding: 0 5px 0 5px">%*s</span> ' % (
+                              'padding: 0 5px 0 5px">%*s </span>' % (
                               mw, (num%st and ' ' or num)) + line)
                     num += 1
         elif sp:
             for t, line in lines:
-                yield 1, '<span class="lineno%s">%*s</span> ' % (
+                yield 1, '<span class="lineno%s">%*s </span>' % (
                     num%sp == 0 and ' special' or '', mw,
                     (num%st and ' ' or num)) + line
                 num += 1
         else:
             for t, line in lines:
-                yield 1, '<span class="lineno">%*s</span> ' % (
+                yield 1, '<span class="lineno">%*s </span>' % (
                     mw, (num%st and ' ' or num)) + line
                 num += 1
 

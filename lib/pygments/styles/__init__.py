@@ -17,6 +17,7 @@ from pygments.util import ClassNotFound
 STYLE_MAP = {
     'default':  'default::DefaultStyle',
     'emacs':    'emacs::EmacsStyle',
+    'github':   'github::GithubStyle',
     'friendly': 'friendly::FriendlyStyle',
     'colorful': 'colorful::ColorfulStyle',
     'autumn':   'autumn::AutumnStyle',
@@ -36,6 +37,8 @@ STYLE_MAP = {
     'rrt':      'rrt::RrtStyle',
     'xcode':    'xcode::XcodeStyle',
     'igor':     'igor::IgorStyle',
+    'paraiso-light': 'paraiso_light::ParaisoLightStyle',
+    'paraiso-dark': 'paraiso_dark::ParaisoDarkStyle',
 }
 
 
