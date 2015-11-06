@@ -227,8 +227,8 @@ def printError(msg):
         ', debug' if DEBUG else '' ))
 
 
-def async_do(f, progress_msg="Evernote operation", done_msg=None, on_completion=None):
-    if not done_msg:
+def async_do(f, progress_msg="Evernote operation", done_msg="", on_completion=None):
+    if done_msg == "":
         done_msg = progress_msg + ': ' + "done!"
     status = {'done': False, 'i': 0}
 
@@ -244,7 +244,8 @@ def async_do(f, progress_msg="Evernote operation", done_msg=None, on_completion=
 
     def progress(s):
         if s['done']:
-            sublime.status_message(done_msg)
+            if done_msg is not None:
+                sublime.status_message(done_msg)
         else:
             i = s['i']
             bar = "... [%s=%s]" % (' '*i, ' '*(7-i))
@@ -764,12 +765,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 return
             search_args['notebookGuid'] = notebooks[notebook].guid
             notes = self.find_notes(search_args, max_notes)
-            async_do(lambda: notes_panel(notes), "Fetching notes list")
+            async_do(lambda: notes_panel(notes), "Fetching notes list", done_msg=None)
 
         def do_search(query):
             self.message("Searching notes...")
             search_args['words'] = query
-            async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list")
+            async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list", done_msg=None)
 
         if note_guid:
             self.open_note(note_guid, **kwargs)
