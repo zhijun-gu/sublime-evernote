@@ -64,6 +64,27 @@ def extractTags(tags):
     return tags
 
 
+# From markdown2.py
+# I know this is ugly but will do until we have a better general solution for metadata
+METADATA_PAT = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
+
+def extract_metadata(text):
+    metadata = {}
+    tail = text
+    if text.startswith("---"):  # fast test
+        match = METADATA_PAT.match(text)
+        if match:
+            tail = text[match.end():]
+            metadata_str = match.group(1).strip()
+            for line in metadata_str.split('\n'):
+                key, value = line.split(':', 1)
+                metadata[key.strip()] = value.strip()
+            if "tags" in metadata:
+                metadata["tags"] = extractTags(metadata["tags"])
+
+    return {"metadata": metadata, "contents": tail.lstrip('\n')}
+
+
 METADATA_HEADER = """\
 ---
 title: %s
@@ -824,7 +845,16 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                         builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
                         bmdtxt = note.content[builtin+len(SUBLIME_EVERNOTE_COMMENT_BEG):builtin_end]
                         mdtxt = b64decode(bmdtxt.encode('utf8')).decode('utf8')
-                        meta = ""
+                        parts = extract_metadata(mdtxt)
+                        if parts["metadata"]:
+                            if parts["metadata"].get("title") == note.title and \
+                               "tags" in parts["metadata"] and \
+                               set(parts["metadata"].get("tags")) == set(tags) and \
+                               parts["metadata"].get("notebook") == nb_name:
+                                meta = ""
+                            else:
+                                LOG("Overridding metadata")
+                                mdtxt = parts["contents"]
                         LOG("Loaded from built-in comment")
                     except Exception as e:
                         mdtxt = ""
