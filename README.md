@@ -21,10 +21,10 @@ If you like this plugin and would like to support its development please conside
 # Main Features
 
  * **Send a note to Evernote:** converts the markdown document in the current view into rich text and sends it to your Evernote. You will be able to choose a title, tags and the notebook where to store it.
- * **Open a note from Evernote**: shows panels to choose a note from a notebook, converts it to markdown and presents it in a view.
- * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text).
+ * **Open a note from Evernote**: shows panels to choose a note from a notebook or by searching, converts the note to markdown and presents it in a view.
+ * **Update note**: when editing the markdown of an opened note you can save it back to Evernote (again in rich text). You can also delete a note directly from ST.
  * **Full two-way metadata support**: you can set and change the note's title, notebook and tag just by providing a YAML metadata header in your markdown source.
- * **Attachments**: can insert, list and open attachments.
+ * **Attachments**: can insert, list, delete and open attachments.
  * **Clip to note**: saves the current selection as code snippets to a new note.
 
 See [Commands](#commands) and the [wiki] for details.
@@ -42,7 +42,7 @@ See [Commands](#commands) and the [wiki] for details.
 + Added Create Notebook command
 + Added Revert to version on Evernote command
 + Pygments updated to 2.0.2 (solves conflict with OmniMarkupPreviewer see #106)
-+ Fix: embedded metadata is updated when note's info is modified by other clients (#112)
++ Fix: embedded metadata is updated when note's info is modified by other clients (#112 see [wiki][wiki-meta])
 + Fix: better warn on close behaviour
 
 **v2.6.0**
@@ -60,6 +60,7 @@ See [Commands](#commands) and the [wiki] for details.
  + Added `evernote_has_guid` context key
  + Search command now supports snippets for prompt (#54)
 
+For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
 
 # Installation
 
@@ -269,6 +270,8 @@ Setting                   | Purpose
 `open_single_result`      | when a search returns only one note open it directly skipping the results palette (defaults to `true`)
 `warn_on_close`           | when closing a modified note without saving to Evernote, offer a choice to save or discard changes (defaults to `true`)
 `gfm_tables`              | enable GFM table syntax (default `true`)
+`default_template`        | a file with a Markdown template for new notes (example: `"Packages/User/EvernoteNote.md"`)
+`tab_prefix`              | a string used as a prefix in tabs for notes (default `"Evernote: "`)
 `wiki_tables`             | enable Wiki table syntax (default `false`)
 `debug`                   | enables logging in the console
 
@@ -317,6 +320,7 @@ Libraries (some adapted to work with Evernote formats):
 [CONTRIBUTING]: <CONTRIBUTING.md>
 [wiki]: <https://github.com/bordaigorl/sublime-evernote/wiki/>
 [wiki-md]: <https://github.com/bordaigorl/sublime-evernote/wiki/Supported-Markdown>
+[wiki-meta]: <https://github.com/bordaigorl/sublime-evernote/wiki/Metadata>
 [bordaigorl]: <https://github.com/bordaigorl>
 [gratipay]: <https://gratipay.com/bordaigorl/>
 [paypal]: <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JFWLSUZYXUHAQ>
