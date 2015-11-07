@@ -900,7 +900,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             newview.set_syntax_file(syntax)
             newview.set_scratch(True)
             replace_view_text(newview, note_contents)
-            newview.show(0)
             self.message('Note "%s" opened!' % note.title)
             self.update_status_info(note, newview)
             note_is_current(newview)
@@ -1394,6 +1393,7 @@ class ReplaceViewTextCommand(sublime_plugin.TextCommand):
     def run(self, edit, characters):
         self.view.erase(edit, sublime.Region(0, self.view.size()))
         self.view.insert(edit, 0, characters)
+        self.view.run_command("move_to", {"to": "bof", "extend": False})
 
 
 class EvernoteListener(EvernoteDo, sublime_plugin.EventListener):
