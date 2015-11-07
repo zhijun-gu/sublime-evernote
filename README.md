@@ -13,7 +13,7 @@ Evernote for Sublime Text
 
 This package is based on [SublimeEvernote](https://github.com/jamiesun/SublimeEvernote) for ST2 but is only supported on ST3 and adds many new features.
 
-To start using it install it from Package Control and type "Evernote" on the Command Pallette (<kbd>ctrl+shift+p</kbd>).
+To start using it install it from Package Control and type "Evernote" on the Command Palette (<kbd>ctrl+shift+p</kbd>).
 See [First Use](https://github.com/bordaigorl/sublime-evernote#first-use) for linking the plugin to your account.
 
 If you like this plugin and would like to support its development please consider donating through a [paypal donation][paypal] or using [gratipay].
@@ -32,6 +32,19 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.7.0**
+
++ Added Delete Note command
++ Added Delete Attachment command
++ Added `default_template` settings to customise new note template
++ CSS style for `body` customises style for the whole note
++ New setting `tab_prefix` to add tag to tab of a note
++ Added Create Notebook command
++ Added Revert to version on Evernote command
++ Pygments updated to 2.0.2 (solves conflict with OmniMarkupPreviewer see #106)
++ Fix: embedded metadata is updated when note's info is modified by other clients (#112)
++ Fix: better warn on close behaviour
+
 **v2.6.0**
 
  + Asynchronous operations: save/update/load from server does not block the UI 
@@ -46,13 +59,6 @@ See [Commands](#commands) and the [wiki] for details.
  + If search has one result open it directly (#65)
  + Added `evernote_has_guid` context key
  + Search command now supports snippets for prompt (#54)
-
-**v2.5.4**
-
- + Bugfix: solves a problem in setting a new token (see #48)
- + Added a `debug` flag in settings
-
-For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
 
 
 # Installation
@@ -148,11 +154,19 @@ For more details about the parameters of this command see the [wiki].
 When the current view is associated with an Evernote note (maybe because you just sent it to Evernote or because it is an opened note) you can update the note with this command.
 The [metadata](#metadata) will be updated according to the metadata block and attachments stored in the original Evernote note will be left alone.
 
+`Command Palette` > `Evernote: Revert to version on Evernote`
+
+When the current view is associated with an Evernote note you can replace its contents by the contents of the note stored on the Evernote server.
+
+`Command Palette` > `Evernote: Delete Note`
+
+When the current view is associated with an Evernote note this command moves it to Evernote's Trash.
+
 ### Attachments
 
 `Command Palette` > `Evernote: Attach current file to a note`
 
-This will open a pallette from which you can select a notebook and a note in it.
+This will open a palette from which you can select a notebook and a note in it.
 The currently opened file will then be attached to the selected note.
 Existing attachments of the selected note will remain untouched.
 
@@ -164,9 +178,14 @@ If an URL is provided, the file would be downloaded and uploaded to Evernote.
 
 `Command Palette` > `Evernote: Show Attachments`
 
-The command will open a pallette listing all the attachments of the current note.
+The command will open a palette listing all the attachments of the current note.
 If one is selected it will be downloaded and displayed.
 The download will be done asynchronously as it may take some time for heavy files.
+
+`Command Palette` > `Evernote: Delete Attachment`
+
+The command will open a palette listing all the attachments of the current note.
+If one is selected it will be deleted from the note's contents and from its attachments.
 
 ### Clip as new Note
 
@@ -245,9 +264,9 @@ Setting                   | Purpose
 `notes_order`             | how to sort the notes in the panels; possible values: `created`, `updated`, `relevance`, `update_sequence_number`, `title`. Set the `notes_order_ascending` setting to `true` to reverse the selected order.
 `max_notes`               | maximum number of notes in a panel; default is 100.
 `update_on_save`          | when this setting is true, saving a file containing a note will also update (overwriting it) the online version. Default is false.
-`sort_notebooks`          | sorts notebooks alphabetically in pallette
-`show_stacks`             | shows the stack of notebooks in pallette
-`open_single_result`      | when a search returns only one note open it directly skipping the results pallette (defaults to `true`)
+`sort_notebooks`          | sorts notebooks alphabetically in palette
+`show_stacks`             | shows the stack of notebooks in palette
+`open_single_result`      | when a search returns only one note open it directly skipping the results palette (defaults to `true`)
 `warn_on_close`           | when closing a modified note without saving to Evernote, offer a choice to save or discard changes (defaults to `true`)
 `gfm_tables`              | enable GFM table syntax (default `true`)
 `wiki_tables`             | enable Wiki table syntax (default `false`)
@@ -278,7 +297,11 @@ The plugin has been made possible by the contribution of several people:
    [paki](https://github.com/paki),
    [zsytssk](https://github.com/zsytssk),
    [metalbrick](https://github.com/metalbrick),
-   [danielfrg](https://github.com/danielfrg).
+   [danielfrg](https://github.com/danielfrg),
+   [avcreation](https://github.com/avcreation),
+   [AntonPalich](https://github.com/AntonPalich),
+   [pimlock](https://github.com/pimlock),
+   [ranmocy](https://github.com/ranmocy).
 
 If you think your name should be here, let us know!
 

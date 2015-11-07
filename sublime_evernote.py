@@ -41,14 +41,14 @@ from datetime import datetime
 
 from base64 import b64encode, b64decode
 
-EVERNOTE_PLUGIN_VERSION = "2.6.0"
+EVERNOTE_PLUGIN_VERSION = "2.7.0"
 USER_AGENT = {'User-Agent': 'SublimeEvernote/' + EVERNOTE_PLUGIN_VERSION}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
 SUBLIME_EVERNOTE_COMMENT_BEG = "<!-- Sublime:"
 SUBLIME_EVERNOTE_COMMENT_END = "-->"
 
-DEBUG = False
+DEBUG = True
 
 
 def LOG(*args):
