@@ -211,7 +211,7 @@ def explain_error(err):
                     return explanation +\
                         "The note contains a '%s' HTML tag"\
                         " with a '%s' attribute; this is not allowed in a note." %\
-                    msg[3], msg[1]
+                        (msg[3], msg[1])
             return explanation + err.parameter
         else:
             return err_reason(err)
