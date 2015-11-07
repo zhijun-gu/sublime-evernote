@@ -26,6 +26,7 @@
         }
     },
     { "command": "reconfig_evernote", "caption": "Evernote Settings: Reconfigure Authorization" },
+    { "command": "create_notebook", "caption": "Evernote: Create New Notebook" },
     { "command": "save_evernote_note", "caption": "Evernote: Update Evernote Note" },
     { "command": "delete_evernote_note", "caption": "Evernote: Delete Note" },
     { "command": "new_evernote_note", "caption": "Evernote: New empty note" },

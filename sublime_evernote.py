@@ -425,6 +425,19 @@ class EvernoteDo():
         EvernoteDo._notebooks_cache = notebooks
         return notebooks
 
+    def create_notebook(self, name):
+        try:
+            noteStore = self.get_note_store()
+            notebook = Types.Notebook()
+            notebook.name = name
+            notebooks = noteStore.createNotebook(self.token(), notebook)
+        except Exception as e:
+            sublime.error_message(explain_error(e))
+            LOG(e)
+            return None
+        EvernoteDo._notebooks_cache = None # To force notebook cache refresh
+        return self.notebook_from_name(name)
+
     def get_note_link(self, guid):
         linkformat = 'evernote:///view/{userid}/{shardid}/{noteguid}/{noteguid}/'
         return linkformat.format(userid=self.get_user_id(), shardid=self.get_shard_id(), noteguid=guid)
@@ -1348,6 +1361,26 @@ class ReconfigEvernoteCommand(EvernoteDoWindow):
         self.settings.erase("noteStoreUrl")
         self.clear_cache()
         self.connect(lambda: True)
+
+
+class CreateNotebookCommand(EvernoteDoWindow):
+
+    def run(self):
+        self.view = self.window.active_view()
+        self.settings = sublime.load_settings(EVERNOTE_SETTINGS)
+
+        def on_notebook(notebook):
+            if not notebook:
+                sublime.error_message("Notebook name is required")
+            else:
+                new_notebook = self.create_notebook(notebook)
+                if new_notebook:
+                    self.message("Newly created notebook: %s" % notebook)
+
+        self.window.show_input_panel(
+            "Notebook name (required):", "",
+            on_notebook, None, None)
+
 
 
 class ClearEvernoteCacheCommand(sublime_plugin.WindowCommand):
