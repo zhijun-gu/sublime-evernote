@@ -10,11 +10,11 @@
 
 # Features
 
- * New note: `templates = find_resources("EvernoteNewNote*.sublime-snippet")`
-   If `len(templates)==1` use that. Otherwise show quick panel.
-   If `template` argument is given pass that verbatim to `insert_snippet`
-   (so possible args can be `{"name": snippet_file}` or `{"contents": snippet}`)
- * Global style
+ * Offline notes support:
+    - YAML ships with ST3. CHECK!
+    - Force upload/ Revert from Evernote commands
+      is_enabled looks for noteguid field with fast find metadata + Split and Parse YAML metadata
+    - Update metadata command?
 
 # Documentation
 
