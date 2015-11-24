@@ -973,16 +973,16 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
 class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
 
-    def open_note(self, guid, **unk_args):
+    def open_note(self, guid, template="[{title}]({url})", to="view", **unk_args):
         noteStore = self.get_note_store()
         note = noteStore.getNote(self.token(), guid, False, False, False, False)
         title = note.title
         link = self.get_note_link(guid)
-        mdlink = '[{}]({})'.format(title, link)
-        insert_to_view(self.view, mdlink)
-
-    def is_enabled(self, **kw):
-        return bool(self.window.active_view().settings().get('$evernote', False))
+        fullLink = template.format(title=title, url=link)
+        if to == "view":
+            insert_to_view(self.view, fullLink)
+        elif to == "clipboard":
+            sublime.set_clipboard(fullLink)
 
 
 # Note that this regex needs to work with both Python as well as Sublime.
