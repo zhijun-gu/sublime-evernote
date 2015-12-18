@@ -316,6 +316,9 @@ class EvernoteDo():
         DEBUG = bool(self.settings.get('debug'))
         pygm_style = self.settings.get('code_highlighting_style')
         if pygm_style:
+            if pygm_style == "github":
+                from githubstyle import GithubStyle
+                pygm_style = GithubStyle
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
         if self.settings.get("code_friendly"):
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
