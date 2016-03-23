@@ -858,7 +858,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 # tags = [self.tag_from_guid(guid) for guid in (note.tagGuids or [])]
                 tags = noteStore.getNoteTagNames(self.token(), note.guid)
                 meta = metadata_header(note.title, tags, nb_name)
-                builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
+                body_start = note.content.find('<en-note')
+                if body_start < 0:
+                    body_start = 0
+                else:
+                    body_start = note.content.find('>', body_start) + 1
+                builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, body_start, body_start+100)
                 if builtin >= 0:
                     try:
                         builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
