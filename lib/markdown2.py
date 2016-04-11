@@ -374,7 +374,7 @@ class Markdown(object):
     #   foo: bar
     #   another-var: blah blah
     #   ---
-    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
+    _metadata_pat = re.compile("""^---[ \t]*\n((?:[ \t]*[^ \t\n:]+[ \t]*:[^\n]*\n)+)---[ \t]*\n""")
 
     def _extract_metadata(self, text):
         # fast test
