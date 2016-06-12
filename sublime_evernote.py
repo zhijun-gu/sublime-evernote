@@ -41,7 +41,7 @@ from datetime import datetime
 
 from base64 import b64encode, b64decode
 
-EVERNOTE_PLUGIN_VERSION = "2.7.0"
+EVERNOTE_PLUGIN_VERSION = "2.7.1"
 USER_AGENT = {'User-Agent': 'SublimeEvernote/' + EVERNOTE_PLUGIN_VERSION}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
@@ -316,6 +316,12 @@ class EvernoteDo():
         DEBUG = bool(self.settings.get('debug'))
         pygm_style = self.settings.get('code_highlighting_style')
         if pygm_style:
+            if pygm_style == "github":
+                from pygmstyles.github import GithubStyle
+                pygm_style = GithubStyle
+            elif pygm_style == "github2014":
+                from pygmstyles.github2014 import Github2014Style
+                pygm_style = Github2014Style
             EvernoteDo.MD_EXTRAS['fenced-code-blocks']['style'] = pygm_style
         if self.settings.get("code_friendly"):
             EvernoteDo.MD_EXTRAS['code-friendly'] = None
@@ -813,6 +819,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list", done_msg=None)
 
         if note_guid:
+            if note_guid == "prompt":
+                self.window.show_input_panel("Note GUID or link:", "", lambda x: self.open_note(x, **kwargs), None, None)
+                return    
+            elif note_guid == "clipboard":
+                note_guid = sublime.get_clipboard(2000)
+                
             self.open_note(note_guid, **kwargs)
             return
 
@@ -844,6 +856,10 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
+        try:
+            guid = guid.strip().split('/')[-1]
+        except Exception:
+            pass
         async_do(lambda: self.do_open_note(guid, convert, **unk_args), "Retrieving note")
 
     def do_open_note(self, guid, convert=True, **unk_args):
@@ -858,7 +874,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 # tags = [self.tag_from_guid(guid) for guid in (note.tagGuids or [])]
                 tags = noteStore.getNoteTagNames(self.token(), note.guid)
                 meta = metadata_header(note.title, tags, nb_name)
-                builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, 0, 150)
+                body_start = note.content.find('<en-note')
+                if body_start < 0:
+                    body_start = 0
+                else:
+                    body_start = note.content.find('>', body_start) + 1
+                builtin = note.content.find(SUBLIME_EVERNOTE_COMMENT_BEG, body_start, body_start+100)
                 if builtin >= 0:
                     try:
                         builtin_end = note.content.find(SUBLIME_EVERNOTE_COMMENT_END, builtin)
@@ -973,16 +994,16 @@ class AttachToEvernoteNote(OpenEvernoteNoteCommand):
 
 class InsertLinkToEvernoteNote(OpenEvernoteNoteCommand):
 
-    def open_note(self, guid, **unk_args):
+    def open_note(self, guid, template="[{title}]({url})", to="view", **unk_args):
         noteStore = self.get_note_store()
         note = noteStore.getNote(self.token(), guid, False, False, False, False)
         title = note.title
         link = self.get_note_link(guid)
-        mdlink = '[{}]({})'.format(title, link)
-        insert_to_view(self.view, mdlink)
-
-    def is_enabled(self, **kw):
-        return bool(self.window.active_view().settings().get('$evernote', False))
+        fullLink = template.format(title=title, url=link)
+        if to == "view":
+            insert_to_view(self.view, fullLink)
+        elif to == "clipboard":
+            sublime.set_clipboard(fullLink)
 
 
 # Note that this regex needs to work with both Python as well as Sublime.
@@ -1111,7 +1132,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
             attr = {}
             mimet = None
             try:
-                if urllib.parse.urlparse(filename).scheme != "":
+                if not os.path.isfile(filename): # urllib.parse.urlparse(filename).scheme != "":
                     # download
                     response = urllib.request.urlopen(filename)
                     filecontents = response.read()
