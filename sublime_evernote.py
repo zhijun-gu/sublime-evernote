@@ -1116,7 +1116,7 @@ class EvernoteInsertAttachment(EvernoteDoText):
             attr = {}
             mimet = None
             try:
-                if urllib.parse.urlparse(filename).scheme != "":
+                if not os.path.isfile(filename): # urllib.parse.urlparse(filename).scheme != "":
                     # download
                     response = urllib.request.urlopen(filename)
                     filecontents = response.read()
