@@ -32,6 +32,15 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.7.1**
+
++ Fix: solved incompatibility with [Markdown Preview](https://packagecontrol.io/packages/Markdown%20Preview) plugin (fixes #119)
++ Fix: multiple metadata headers now supported (thanks [@xdutaotao](https://github.com/bordaigorl/sublime-evernote/issues/127#issuecomment-208210297))
++ Fix: long CSS for body now properly supported (fixes #128)
++ Fix: url/filepath detection fixed for Windows (fixes #137, thanks @358463121)
++ **Open note**: accept links as `note_guid` and offer options to load from clipboard/prompt (see [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/The-Open-Note-Command))
++ **Insert Note Link**: now accepts `template` and `to` arguments
+
 **v2.7.0**
 
 + Added Delete Note command
@@ -44,21 +53,6 @@ See [Commands](#commands) and the [wiki] for details.
 + Pygments updated to 2.0.2 (solves conflict with OmniMarkupPreviewer see #106)
 + Fix: embedded metadata is updated when note's info is modified by other clients (#112 see [wiki][wiki-meta])
 + Fix: better warn on close behaviour
-
-**v2.6.0**
-
- + Asynchronous operations: save/update/load from server does not block the UI 
- + Warn on close if modified but not uploaded (`warn_on_close` setting)
- + Added support for GFM tables syntax (#51, #58)
- + Added support for strikethrough (#38)
- + Added support for underline (see [special syntax][wiki-md])
- + Settings for default emphasis/unordered list marks
- + Better support for Unicode (#52) 
- + CSS styling for inline code fixed (#53)
- + Support for HTTPS for Package Control v3 users ([see wiki][wiki])
- + If search has one result open it directly (#65)
- + Added `evernote_has_guid` context key
- + Search command now supports snippets for prompt (#54)
 
 For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
 
@@ -293,6 +287,7 @@ The plugin has been made possible by the contribution of several people:
      - [rekotan](https://github.com/rekotan/SublimeEvernote)
      - [timlockridge](https://github.com/timlockridge/SublimeEvernote)
  * Other contributors:
+   [358463121](https://github.com/358463121),
    [rahul-ramadas](https://github.com/rahul-ramadas),
    [mwcraig](https://github.com/mwcraig),
    [rayou](https://github.com/rayou),
