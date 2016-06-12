@@ -819,6 +819,12 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             async_do(lambda: notes_panel(self.find_notes(search_args, max_notes), True), "Fetching notes list", done_msg=None)
 
         if note_guid:
+            if note_guid == "prompt":
+                self.window.show_input_panel("Note GUID or link:", "", lambda x: self.open_note(x, **kwargs), None, None)
+                return    
+            elif note_guid == "clipboard":
+                note_guid = sublime.get_clipboard(2000)
+                
             self.open_note(note_guid, **kwargs)
             return
 
@@ -850,6 +856,10 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
             NoteStore.NotesMetadataResultSpec(includeTitle=True, includeNotebookGuid=True)).notes
 
     def open_note(self, guid, convert=True, **unk_args):
+        try:
+            guid = guid.strip().split('/')[-1]
+        except Exception:
+            pass
         async_do(lambda: self.do_open_note(guid, convert, **unk_args), "Retrieving note")
 
     def do_open_note(self, guid, convert=True, **unk_args):
