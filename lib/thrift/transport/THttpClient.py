@@ -21,7 +21,12 @@ import http.client
 import os
 import socket
 import sys
-import urllib.parse
+try:
+  import urllib.parse
+  quote    = urllib.parse.quote
+  urlparse = urllib.parse.urlparse
+except:
+  from urllib.parse import quote, urlparse
 import warnings
 
 from io import BytesIO
@@ -51,7 +56,7 @@ class THttpClient(TTransportBase):
       self.path = path
       self.scheme = 'http'
     else:
-      parsed = urllib.parse.urlparse(uri_or_host)
+      parsed = urlparse(uri_or_host)
       self.scheme = parsed.scheme
       assert self.scheme in ('http', 'https')
       if self.scheme == 'http':
@@ -131,7 +136,7 @@ class THttpClient(TTransportBase):
       user_agent = 'Python/THttpClient'
       script = os.path.basename(sys.argv[0])
       if script:
-        user_agent = '%s (%s)' % (user_agent, urllib.parse.quote(script))
+        user_agent = '%s (%s)' % (user_agent, quote(script))
       self.__http.putheader('User-Agent', user_agent)
 
     if self.__custom_headers:
