@@ -1,11 +1,11 @@
 Evernote for Sublime Text
 =========================
 
+[![pc badge]][pc]
 [![release badge]][release]
 [![licence badge]][licence]
 [![stars badge]][repo]
 [![issues badge]][issues]
-[![tips badge]][gratipay]
 [![paypal badge]][paypal]
 [![chat badge]][gitter]
 
@@ -324,7 +324,9 @@ Libraries (some adapted to work with Evernote formats):
 [licence]: <https://raw.githubusercontent.com/bordaigorl/sublime-evernote/master/LICENSE>
 [issues]: <https://github.com/bordaigorl/sublime-evernote/issues>
 [repo]: <https://github.com/bordaigorl/sublime-evernote/>
+[pc]: <https://packagecontrol.io/packages/Evernote>
 
+[pc badge]: https://packagecontrol.herokuapp.com/downloads/Evernote.svg
 [release badge]: https://img.shields.io/github/release/bordaigorl/sublime-evernote.svg
 [licence badge]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [stars badge]: https://img.shields.io/github/stars/bordaigorl/sublime-evernote.svg
