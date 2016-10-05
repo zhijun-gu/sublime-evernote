@@ -41,7 +41,7 @@ from datetime import datetime
 
 from base64 import b64encode, b64decode
 
-EVERNOTE_PLUGIN_VERSION = "2.7.1"
+EVERNOTE_PLUGIN_VERSION = "2.7.2"
 USER_AGENT = {'User-Agent': 'SublimeEvernote/' + EVERNOTE_PLUGIN_VERSION}
 
 EVERNOTE_SETTINGS = "Evernote.sublime-settings"
@@ -821,10 +821,10 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
         if note_guid:
             if note_guid == "prompt":
                 self.window.show_input_panel("Note GUID or link:", "", lambda x: self.open_note(x, **kwargs), None, None)
-                return    
+                return
             elif note_guid == "clipboard":
                 note_guid = sublime.get_clipboard(2000)
-                
+
             self.open_note(note_guid, **kwargs)
             return
 
@@ -836,7 +836,6 @@ class OpenEvernoteNoteCommand(EvernoteDoWindow):
                 if isinstance(by_searching, dict):
                     p.run_command("insert_snippet", {"contents": by_searching.get("snippet", "")})
             return
-
         if from_notebook or with_tags:
             notes_panel(self.find_notes(search_args, max_notes), not from_notebook)
         elif len(notebooks) == 1:

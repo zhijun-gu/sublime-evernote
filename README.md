@@ -32,6 +32,10 @@ See [Commands](#commands) and the [wiki] for details.
 
 ## What's new
 
+**v2.7.2**
+
++ Fix: patching Evernote's SDK to make it compatible with ST 3126 on Linux (fixes #150)
+
 **v2.7.1**
 
 + Fix: solved incompatibility with [Markdown Preview](https://packagecontrol.io/packages/Markdown%20Preview) plugin (fixes #119)
@@ -41,20 +45,7 @@ See [Commands](#commands) and the [wiki] for details.
 + **Open note**: accept links as `note_guid` and offer options to load from clipboard/prompt (see [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/The-Open-Note-Command))
 + **Insert Note Link**: now accepts `template` and `to` arguments
 
-**v2.7.0**
-
-+ Added Delete Note command
-+ Added Delete Attachment command
-+ Added `default_template` settings to customise new note template
-+ CSS style for `body` customises style for the whole note
-+ New setting `tab_prefix` to add tag to tab of a note
-+ Added Create Notebook command
-+ Added Revert to version on Evernote command
-+ Pygments updated to 2.0.2 (solves conflict with OmniMarkupPreviewer see #106)
-+ Fix: embedded metadata is updated when note's info is modified by other clients (#112 see [wiki][wiki-meta])
-+ Fix: better warn on close behaviour
-
-For earlier versions see the [wiki](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog).
+See the [Changelog](https://github.com/bordaigorl/sublime-evernote/wiki/Changelog) for the full list.
 
 # Installation
 
