@@ -355,8 +355,22 @@ class EvernoteDo():
         info = "Note created %s, updated %s, %s attachments" % (
             datestr(note.created), datestr(note.updated), len(note.resources or []))
         view.set_status("Evernote-info", info)
-        if view.file_name() is None and note.title is not None:
-            view.set_name(self.settings.get("tab_prefix", "") + note.title)
+        if view.file_name() is None:
+            if self.settings.has("tab_title"):  # this way we avoid extra work if feature not needed
+                try:
+                    nb = self.notebook_from_guid(note.notebookGuid)
+                    note_data = {
+                        "date": datetime.fromtimestamp(note.created // 1000).strftime("%d/%m/%y"),
+                        "title": note.title,
+                        "notebook": nb.name,
+                        "stack": nb.stack,
+                        "prefix": self.settings.get("tab_prefix", "")
+                    }
+                    view.set_name(self.settings.get("tab_title", "").format(**note_data))
+                except Exception:
+                    view.set_name(self.settings.get("tab_prefix", "") + note.title)
+            else:
+                view.set_name(self.settings.get("tab_prefix", "") + note.title)
 
     def connect(self, callback, **kwargs):
         self.message("initializing..., please wait...")
