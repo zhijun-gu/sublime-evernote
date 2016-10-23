@@ -336,7 +336,7 @@ class EvernoteDo():
         if css is not None:
             for tag in css:
                 css[tag] = css[tag].strip()
-                if not css[tag].endswith(";"):
+                if len(css[tag]) > 0 and not css[tag].endswith(";"):
                     css[tag] = css[tag] + ";"
             EvernoteDo.MD_EXTRAS['inline-css'] = css
         self.md_syntax = self.settings.get("md_syntax")
@@ -505,13 +505,14 @@ class EvernoteDo():
 
         wrapper_style = ''
         if 'inline-css' in EvernoteDo.MD_EXTRAS:
-            if 'body' in EvernoteDo.MD_EXTRAS['inline-css']:
-                wrapper_style = EvernoteDo.MD_EXTRAS['inline-css']['body']
+            wrapper_style = EvernoteDo.MD_EXTRAS['inline-css'].get('body', "")
+            if len(wrapper_style) > 0:
+                wrapper_style = ' style="%s"' % wrapper_style
 
         meta = body.metadata or {}
         content = '<?xml version="1.0" encoding="UTF-8"?>'
         content += '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
-        content += '<en-note style="%s">' % wrapper_style
+        content += '<en-note%s>' % wrapper_style
         hidden = ('\n%s%s%s\n' %
                     (SUBLIME_EVERNOTE_COMMENT_BEG,
                      b64encode(contents.encode('utf8')).decode('utf8'),
